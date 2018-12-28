@@ -4,10 +4,10 @@ import java.io.File
 
 class AdventOfCodeDay1Test {
 
-    private val sumTest = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/sum.txt")
-    private val repeat1 = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/repeat.txt")
-    private val repeat2 = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/repeat2.txt")
-    private val realFile = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/advent-of-code-input.txt")
+    private val sumTest = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day1/sum.txt")
+    private val repeat1 = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day1/repeat.txt")
+    private val repeat2 = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day1/repeat2.txt")
+    private val realFile = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day1/advent-of-code-input.txt")
 
     @Test
     fun `should read a file into a list of integers`() {

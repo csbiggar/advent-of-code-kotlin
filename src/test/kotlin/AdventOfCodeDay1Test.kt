@@ -28,26 +28,18 @@ class AdventOfCodeDay1Test {
     @Test
     fun `should give the first repeating coordinate`() {
         val result1 = findFirstRepeatingFrequency(repeat1)
+        assertThat(result1).isEqualTo(2)
+
         val result2 = findFirstRepeatingFrequency(repeat2)
+        assertThat(result2).isEqualTo(10)
+
         val realResult = findFirstRepeatingFrequency(realFile)
-
-        assertThat(result1).isInstanceOf(RepeatedFrequency::class.java)
-        assertThat((result1 as RepeatedFrequency).value).isEqualTo(2)
-
-        assertThat(result2).isInstanceOf(RepeatedFrequency::class.java)
-        assertThat((result2 as RepeatedFrequency).value).isEqualTo(10)
-
-        assertThat(realResult).isInstanceOf(RepeatedFrequency::class.java)
-        assertThat((realResult as RepeatedFrequency).value).isEqualTo(78724)
+        assertThat(realResult).isEqualTo(78724)
     }
 
     @Test
     fun `show me the answer to the second puzzle`() {
-        val result = findFirstRepeatingFrequency(realFile)
-        if (result is RepeatedFrequency)
-            println("Answer to second puzzle is ${result.value}")
-        else
-            println("There was no repeating frequency!")
+        println("Answer to second puzzle is ${findFirstRepeatingFrequency(realFile)}")
     }
 }
 
@@ -57,36 +49,29 @@ fun readFileOfInts(file: File): List<Int> = file
 
 fun sumFileOfInts(file: File): Int = readFileOfInts(file).sum()
 
-fun findFirstRepeatingFrequency(file: File): Frequency {
+fun findFirstRepeatingFrequency(file: File): Int {
     val frequencyStepChanges = readFileOfInts(file)
-    val previousFrequencies: MutableList<Int> = mutableListOf()
-
-    var currentFrequency: Frequency = UniqueFrequency(0)
-    do {
-        currentFrequency = incrementFrequencyUntilRepeatFound(currentFrequency, frequencyStepChanges, previousFrequencies)
-    } while (currentFrequency is UniqueFrequency)
-
-    return currentFrequency
+    return incrementFrequencyUntilRepeatFound(frequencyStepChanges = frequencyStepChanges)
 }
 
 private fun incrementFrequencyUntilRepeatFound(
-    startFrequency: Frequency,
+    startFrequency: Int = 0,
     frequencyStepChanges: List<Int>,
-    previousFrequencies: MutableList<Int>
-): Frequency {
-    var currentFrequency = startFrequency.value
+    previousFrequencies: MutableList<Int> = mutableListOf()
+): Int {
+
+    var currentFrequency = startFrequency
     frequencyStepChanges.forEach { stepChange ->
         currentFrequency += stepChange
         if (previousFrequencies.contains(currentFrequency)) {
-            return RepeatedFrequency(currentFrequency)
+            return currentFrequency
         }
         previousFrequencies.add(currentFrequency)
     }
-    return UniqueFrequency(currentFrequency)
-}
 
-sealed class Frequency {
-    abstract val value: Int
+    return incrementFrequencyUntilRepeatFound(
+        startFrequency = currentFrequency,
+        frequencyStepChanges = frequencyStepChanges,
+        previousFrequencies = previousFrequencies
+    )
 }
-data class RepeatedFrequency(override val value: Int) : Frequency()
-data class UniqueFrequency(override val value: Int) : Frequency()

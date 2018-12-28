@@ -75,6 +75,7 @@ class Day2 {
         return similarWords.first.charactersMatching(similarWords.second)
     }
 
+    //TODO come back and sort this out
     private fun findWordsWhichDifferBySingleCharacter(input: List<String>): Pair<String, String> {
         input.forEachIndexed { index, anotherWord ->
             val remainingWords = input.subList(index, input.size)

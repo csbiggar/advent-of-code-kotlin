@@ -67,10 +67,13 @@ class Day2 {
 
     @Test
     fun `show me the answer to the second puzzle`() {
-        val input = realInput.readLines()
-        val similarWords = findWordsWhichDifferBySingleCharacter(input)
-        val result = similarWords.first.charactersMatching(similarWords.second)
+        val result = findSharedCharactersOfWordsWhichDifferBySingleCharacter(realInput)
         println("The answer to part 2 is $result")
+    }
+
+    private fun findSharedCharactersOfWordsWhichDifferBySingleCharacter(file: File): String {
+        val similarWords = findWordsWhichDifferBySingleCharacter(file.readLines())
+        return similarWords.first.charactersMatching(similarWords.second)
     }
 
     private fun findWordsWhichDifferBySingleCharacter(input: List<String>): Pair<String, String> {
@@ -81,7 +84,7 @@ class Day2 {
                     return Pair(word, anotherWord)
             }
         }
-        return Pair("", "")
+        return Pair("", "") //Hmmm
     }
 
     private fun String.differsByExactlyOneCharFrom(anotherString: String): Boolean {

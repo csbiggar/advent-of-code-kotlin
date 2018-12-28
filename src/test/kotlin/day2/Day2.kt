@@ -25,7 +25,7 @@ class Day2 {
     }
 
     @Test
-    fun `should generate checksum`() {
+    fun `should generate checksum as num words containing 2 of a letter * num words containing 3 of a letter`() {
         val input: List<String> = example1.readLines()
         assertThat(generateChecksum(input)).isEqualTo(12)
     }
@@ -51,7 +51,7 @@ class Day2 {
     }
 
     @Test
-    fun `should give the matching characters between 2 string`() {
+    fun `should give the matching characters of two strings`() {
         assertThat("aaa".charactersMatching("aaa")).isEqualTo("aaa")
         assertThat("aba".charactersMatching("aaa")).isEqualTo("aa")
         assertThat("abcde".charactersMatching("abdde")).isEqualTo("abde")
@@ -61,7 +61,6 @@ class Day2 {
     fun `should find the first 2 strings in a list that differ by exactly one char`() {
         val input = example2.readLines()
         val result = findWordsWhichDifferBySingleCharacter(input)
-
         assertThat(result.toList()).contains("fghij", "fguij")
     }
 
@@ -99,8 +98,8 @@ class Day2 {
         return entriesWithExactlyTwoOfAnyLetter * entriesWithExactlyThreeOfAnyLetter
     }
 
-    private fun List<String>.entriesWithExactCountOfAnyLetter(count: Int): Int {
-        return filter { it.withExactCountOfAnyLetter(count) }
+    private fun List<String>.entriesWithExactCountOfAnyLetter(requiredCount: Int): Int {
+        return filter { it.withExactCountOfAnyLetter(requiredCount) }
             .size
     }
 
@@ -110,10 +109,10 @@ class Day2 {
             .any { characterCount -> characterCount == requiredCount }
     }
 
-    private fun getFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())
-
     private fun String.charactersMatching(anotherString: String): String {
         return this.filterIndexed { index, char -> char == anotherString[index] }
     }
+
+    private fun getFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())
 
 }

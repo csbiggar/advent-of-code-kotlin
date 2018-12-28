@@ -7,7 +7,7 @@ import java.io.File
 class Day2 {
 
     private val example1 = getFile("example1.txt")
-//    private val example2 = getFile("example2.txt")
+    private val example2 = getFile("example2.txt")
     private val realInput = getFile("advent-of-code-input-day-2.txt")
 
     private val alphabet = ('a'..'z').toList()
@@ -36,15 +36,58 @@ class Day2 {
         println(generateChecksum(input))
     }
 
-//    @Test
-//    fun `should find strings which differ by exactly one character at the same position`() {
-//        val input = example1.readLines()
-//        assertThat(findTwoStringDifferingByExactlyOneChar(input)).isEqualTo(Pair("fghij", "fguij"))
-//    }
-//
-//    private fun findTwoStringDifferingByExactlyOneChar(input: List<String>): String {
-//        return ""
-//    }
+    @Test
+    fun `should tell that 2 strings differ by one character`() {
+        assertThat("aaa".differsByExactlyOneCharFrom("aba")).isTrue()
+    }
+
+    @Test
+    fun `should tell that 2 strings do not differ by one character`() {
+        //strings are the same
+        assertThat("aaa".differsByExactlyOneCharFrom("aaa")).isFalse()
+
+        //strings differ by more than one character
+        assertThat("aaa".differsByExactlyOneCharFrom("abb")).isFalse()
+    }
+
+    @Test
+    fun `should give the matching characters between 2 string`() {
+        assertThat("aaa".charactersMatching("aaa")).isEqualTo("aaa")
+        assertThat("aba".charactersMatching("aaa")).isEqualTo("aa")
+        assertThat("abcde".charactersMatching("abdde")).isEqualTo("abde")
+    }
+
+    @Test
+    fun `should find the first 2 strings in a list that differ by exactly one char`() {
+        val input = example2.readLines()
+        val result = findWordsWhichDifferBySingleCharacter(input)
+
+        assertThat(result.toList()).contains("fghij", "fguij")
+    }
+
+    @Test
+    fun `show me the answer to the second puzzle`() {
+        val input = realInput.readLines()
+        val similarWords = findWordsWhichDifferBySingleCharacter(input)
+        val result = similarWords.first.charactersMatching(similarWords.second)
+        println("The answer to part 2 is $result")
+    }
+
+    private fun findWordsWhichDifferBySingleCharacter(input: List<String>): Pair<String, String> {
+        input.forEachIndexed { index, anotherWord ->
+            val remainingWords = input.subList(index, input.size)
+            for (word in remainingWords) {
+                if (word.differsByExactlyOneCharFrom(anotherWord))
+                    return Pair(word, anotherWord)
+            }
+        }
+        return Pair("", "")
+    }
+
+    private fun String.differsByExactlyOneCharFrom(anotherString: String): Boolean {
+        val nonMatchingChars: String = this.filterIndexed { index, char -> char != anotherString[index] }
+        return nonMatchingChars.length == 1
+    }
 
     private fun generateChecksum(input: List<String>): Int {
         val entriesWithExactlyTwoOfAnyLetter = input.entriesWithExactCountOfAnyLetter(2)
@@ -65,5 +108,9 @@ class Day2 {
     }
 
     private fun getFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())
+
+    private fun String.charactersMatching(anotherString: String): String {
+        return this.filterIndexed { index, char -> char == anotherString[index] }
+    }
 
 }

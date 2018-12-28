@@ -1,13 +1,15 @@
+package day2
+
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.File
 
-class AdventOfCodeDay2Test {
+class Day2 {
 
-    private val example1 = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day2/example1.txt")
-    //    private val example2 = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day2/example2.txt")
-    private val realInput =
-        File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day2/advent-of-code-input-day-2.txt")
+    private val example1 = getFile("example1.txt")
+//    private val example2 = getFile("example2.txt")
+    private val realInput = getFile("advent-of-code-input-day-2.txt")
+
     private val alphabet = ('a'..'z').toList()
 
     @Test
@@ -33,10 +35,15 @@ class AdventOfCodeDay2Test {
         val input = realInput.readLines()
         println(generateChecksum(input))
     }
-//
+
 //    @Test
-//    fun `should find strings which differ by exactly one character at the same position`(){
+//    fun `should find strings which differ by exactly one character at the same position`() {
 //        val input = example1.readLines()
+//        assertThat(findTwoStringDifferingByExactlyOneChar(input)).isEqualTo(Pair("fghij", "fguij"))
+//    }
+//
+//    private fun findTwoStringDifferingByExactlyOneChar(input: List<String>): String {
+//        return ""
 //    }
 
     private fun generateChecksum(input: List<String>): Int {
@@ -56,5 +63,7 @@ class AdventOfCodeDay2Test {
             .map { letter -> this.count { characterFromString -> characterFromString == letter } }
             .any { characterCount -> characterCount == requiredCount }
     }
+
+    private fun getFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())
 
 }

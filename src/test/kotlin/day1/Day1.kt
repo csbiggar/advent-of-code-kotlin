@@ -1,14 +1,16 @@
+package day1
+
 import org.assertj.core.api.Assertions.assertThat
+
 import org.junit.jupiter.api.Test
 import java.io.File
 
-class AdventOfCodeDay1Test {
+class Day1 {
 
-    private val sumTest = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day1/sum.txt")
-    private val repeat1 = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day1/repeat.txt")
-    private val repeat2 = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day1/repeat2.txt")
-    private val realFile =
-        File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day1/advent-of-code-input.txt")
+    private val sumTest = getFile("sum.txt")
+    private val repeat1 = getFile("repeat.txt")
+    private val repeat2 = getFile("repeat2.txt")
+    private val realFile = getFile("advent-of-code-input.txt")
 
     @Test
     fun `should read a file into a list of integers`() {
@@ -41,6 +43,8 @@ class AdventOfCodeDay1Test {
     fun `show me the answer to the second puzzle`() {
         println("Answer to second puzzle is ${findFirstRepeatingFrequency(realFile)}")
     }
+
+    private fun getFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())
 }
 
 fun readFileOfInts(file: File): List<Int> = file

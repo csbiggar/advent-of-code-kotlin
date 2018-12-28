@@ -5,7 +5,9 @@ import java.io.File
 class AdventOfCodeDay2Test {
 
     private val example1 = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day2/example1.txt")
-    private val realInput = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day2/advent-of-code-input-day-2.txt")
+    //    private val example2 = File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day2/example2.txt")
+    private val realInput =
+        File("/home/carolyn/code/advent-of-code-2018/src/test/resources/day2/advent-of-code-input-day-2.txt")
     private val alphabet = ('a'..'z').toList()
 
     @Test
@@ -21,16 +23,21 @@ class AdventOfCodeDay2Test {
     }
 
     @Test
-    fun `should generate checksum`(){
+    fun `should generate checksum`() {
         val input: List<String> = example1.readLines()
         assertThat(generateChecksum(input)).isEqualTo(12)
     }
 
     @Test
-    fun `show me the answer to the first puzzle`(){
+    fun `show me the answer to the first puzzle`() {
         val input = realInput.readLines()
         println(generateChecksum(input))
     }
+//
+//    @Test
+//    fun `should find strings which differ by exactly one character at the same position`(){
+//        val input = example1.readLines()
+//    }
 
     private fun generateChecksum(input: List<String>): Int {
         val entriesWithExactlyTwoOfAnyLetter = input.entriesWithExactCountOfAnyLetter(2)
@@ -44,10 +51,10 @@ class AdventOfCodeDay2Test {
             .size
     }
 
-    private fun String.withExactCountOfAnyLetter(count: Int): Boolean {
+    private fun String.withExactCountOfAnyLetter(requiredCount: Int): Boolean {
         return alphabet
-            .map { this.count { stringCharacter -> stringCharacter == it } }
-            .any { characterCount -> characterCount == count }
+            .map { letter -> this.count { characterFromString -> characterFromString == letter } }
+            .any { characterCount -> characterCount == requiredCount }
     }
 
 }

@@ -73,14 +73,37 @@ class Day3 {
         println("The answer to part 1 is: ${overlappedCoords.size} square inches are withing 2 or more claims")
     }
 
+    @Test
+    fun `should find non-overlapping claim`() {
+        val claims = getFile("cloth-claims-example1.txt").readLines().map { ClothClaim.from(it) }
+        assertThat(findNonOverlappingClaim(claims).id).isEqualTo(3)
+    }
+
+    @Test
+    fun `show me the answer to day 3 part 2`() {
+        val claims = getFile("advent-of-code-input-day-3.txt").readLines().map { ClothClaim.from(it) }
+        val nonOverlappingClaim = findNonOverlappingClaim(claims)
+        println("The answer to part 1 is: ${nonOverlappingClaim.id} is the non-overlapping claim")
+    }
+
     private fun getOverlappedCoords(claims: List<ClothClaim>): List<Coordinate> {
         return claims
-            .flatMap { claim ->  claim.getAreaCoordinates() }
+            .flatMap { claim -> claim.getAreaCoordinates() }
             .groupBy { it }
             .mapValues { (_, listOfOccurrences) -> listOfOccurrences.size }
             .filter { (_, numberOfOccurrences) -> numberOfOccurrences > 1 }
             .keys
             .toList()
+    }
+
+    private fun findNonOverlappingClaim(claims: List<ClothClaim>): ClothClaim {
+        val overlappedCoords = getOverlappedCoords(claims)
+        return claims.filterNot { clothClaim ->
+            clothClaim.getAreaCoordinates().any { coordinate ->
+                overlappedCoords.contains(coordinate)
+            }
+        }.first()
+
     }
 
     private fun getFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())

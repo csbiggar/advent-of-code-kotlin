@@ -98,12 +98,12 @@ class Day3 {
 
     private fun findNonOverlappingClaim(claims: List<ClothClaim>): ClothClaim {
         val overlappedCoords = getOverlappedCoords(claims)
-        return claims.filterNot { clothClaim ->
-            clothClaim.getAreaCoordinates().any { coordinate ->
-                overlappedCoords.contains(coordinate)
-            }
-        }.first()
-
+        return claims.first {
+            it.getAreaCoordinates()
+                .all { coordinate ->
+                    coordinate !in overlappedCoords
+                }
+        }
     }
 
     private fun getFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())

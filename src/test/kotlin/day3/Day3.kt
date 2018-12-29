@@ -28,40 +28,6 @@ class Day3 {
     }
 
     @Test
-    fun `should tell if two claims are not overlapping`() {
-        val claim1 = ClothClaim(
-            id = 1,
-            topLeftCorner = Coordinate(1, 1),
-            bottomRightCorner = Coordinate(1, 1)
-        )
-
-        val claim2 = ClothClaim(
-            id = 2,
-            topLeftCorner = Coordinate(2, 2),
-            bottomRightCorner = Coordinate(2, 2)
-        )
-
-        assertThat(claim1.overlapsWith(claim2)).isFalse()
-    }
-
-    @Test
-    fun `should tell if two claims are overlapping`() {
-        val claim1 = ClothClaim(
-            id = 1,
-            topLeftCorner = Coordinate(1, 1),
-            bottomRightCorner = Coordinate(2, 2)
-        )
-
-        val claim2 = ClothClaim(
-            id = 2,
-            topLeftCorner = Coordinate(2, 2),
-            bottomRightCorner = Coordinate(2, 2)
-        )
-
-        assertThat(claim1.overlapsWith(claim2)).isTrue()
-    }
-
-    @Test
     fun `should generate a list of coordinates representing the area of a claim`() {
         val claim = ClothClaim(
             id = 1,
@@ -82,27 +48,6 @@ class Day3 {
     }
 
     @Test
-    fun `should list the overlapping coordinates between two claims`() {
-        val claim1 = ClothClaim(
-            id = 1,
-            topLeftCorner = Coordinate(1, 1),
-            bottomRightCorner = Coordinate(2, 2)
-        )
-
-        val claim2 = ClothClaim(
-            id = 2,
-            topLeftCorner = Coordinate(2, 2),
-            bottomRightCorner = Coordinate(2, 2)
-        )
-
-        val expectedCoordinates = listOf(
-            Coordinate(2, 2)
-        )
-
-        assertThat(claim1.getCoordinatesOverlappingWith(claim2)).containsAll(expectedCoordinates)
-    }
-
-    @Test
     fun `should get deduplicated list of overlapped coords`() {
         val claims = getFile("cloth-claims-example1.txt").readLines().map { ClothClaim.from(it) }
 
@@ -117,32 +62,30 @@ class Day3 {
         assertThat(result).containsAll(expectedCoordinates)
         assertThat(result.size).isEqualTo(expectedCoordinates.size)
 
+        val realClaims = getFile("advent-of-code-input-day-3.txt").readLines().map { ClothClaim.from(it) }
+        assertThat(getOverlappedCoords(realClaims).size).isEqualTo(112378)
     }
 
     @Test
-    fun `show me the answer to day 3 part 1`(){
+    fun `show me the answer to day 3 part 1`() {
         val claims = getFile("advent-of-code-input-day-3.txt").readLines().map { ClothClaim.from(it) }
         val overlappedCoords = getOverlappedCoords(claims)
         println("The answer to part 1 is: ${overlappedCoords.size} square inches are withing 2 or more claims")
     }
 
     private fun getOverlappedCoords(claims: List<ClothClaim>): List<Coordinate> {
-        val overlappedCoords = mutableListOf<Coordinate>()
-
-        claims.forEachIndexed { index, claim ->
-            val remainingClaims = claims.subList(index + 1, claims.size)
-            for (otherClaim in remainingClaims) {
-                overlappedCoords.addAll(claim.getCoordinatesOverlappingWith(otherClaim))
-            }
-        }
-
-        return overlappedCoords.distinct()
+        return claims
+            .flatMap { claim ->  claim.getAreaCoordinates() }
+            .groupBy { it }
+            .mapValues { (_, listOfOccurrences) -> listOfOccurrences.size }
+            .filter { (_, numberOfOccurrences) -> numberOfOccurrences > 1 }
+            .keys
+            .toList()
     }
 
     private fun getFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())
 
 }
-
 
 
 data class ClothClaim(
@@ -171,11 +114,6 @@ data class ClothClaim(
         }
     }
 
-    fun overlapsWith(anotherClaim: ClothClaim): Boolean {
-        val otherArea = anotherClaim.getAreaCoordinates()
-        return this.getAreaCoordinates().any { it in otherArea }
-    }
-
     fun getAreaCoordinates(): List<Coordinate> {
         val xRange = topLeftCorner.x..bottomRightCorner.x
         val yRange = topLeftCorner.y..bottomRightCorner.y
@@ -191,10 +129,6 @@ data class ClothClaim(
         return coords
     }
 
-    fun getCoordinatesOverlappingWith(anotherClaim: ClothClaim): List<Coordinate> {
-        val otherArea = anotherClaim.getAreaCoordinates()
-        return this.getAreaCoordinates().filter { it in otherArea }
-    }
 }
 
 data class Coordinate(val x: Int, val y: Int)

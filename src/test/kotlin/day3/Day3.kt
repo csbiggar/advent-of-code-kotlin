@@ -80,6 +80,27 @@ class Day3 {
         assertThat(claim.getAreaCoordinates()).containsAll(expectedCoordinates)
     }
 
+    @Test
+    fun `should list the overlapping coordinates between two claims`() {
+        val claim1 = ClothClaim(
+            id = 1,
+            topLeftCorner = Coordinate(1, 1),
+            bottomRightCorner = Coordinate(2, 2)
+        )
+
+        val claim2 = ClothClaim(
+            id = 2,
+            topLeftCorner = Coordinate(2, 2),
+            bottomRightCorner = Coordinate(2, 2)
+        )
+
+        val expectedCoordinates = listOf(
+            Coordinate(2, 2)
+        )
+
+        assertThat(claim1.getCoordinatesOverlappingWith(claim2)).containsAll(expectedCoordinates)
+    }
+
 }
 
 
@@ -129,6 +150,11 @@ data class ClothClaim(
         }
 
         return coords
+    }
+
+    fun getCoordinatesOverlappingWith(anotherClaim: ClothClaim): List<Coordinate> {
+        val otherArea = anotherClaim.getAreaCoordinates()
+        return this.getAreaCoordinates().filter { it in otherArea }
     }
 }
 

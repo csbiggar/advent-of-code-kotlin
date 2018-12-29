@@ -77,11 +77,11 @@ class Day2 {
 
     //TODO come back and sort this out
     private fun findWordsWhichDifferBySingleCharacter(input: List<String>): Pair<String, String> {
-        input.forEachIndexed { index, anotherWord ->
+        input.forEachIndexed { index, currentWord ->
             val remainingWords = input.subList(index, input.size)
-            for (word in remainingWords) {
-                if (word.differsByExactlyOneCharFrom(anotherWord))
-                    return Pair(word, anotherWord)
+            for (otherWord in remainingWords) {
+                if (otherWord.differsByExactlyOneCharFrom(currentWord))
+                    return Pair(otherWord, currentWord)
             }
         }
         return Pair("", "") //Hmmm

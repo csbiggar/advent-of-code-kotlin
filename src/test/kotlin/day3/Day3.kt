@@ -2,6 +2,7 @@ package day3
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.io.File
 
 class Day3 {
 
@@ -101,7 +102,47 @@ class Day3 {
         assertThat(claim1.getCoordinatesOverlappingWith(claim2)).containsAll(expectedCoordinates)
     }
 
+    @Test
+    fun `should get deduplicated list of overlapped coords`() {
+        val claims = getFile("cloth-claims-example1.txt").readLines().map { ClothClaim.from(it) }
+
+        val expectedCoordinates = listOf(
+            Coordinate(4, 4),
+            Coordinate(4, 5),
+            Coordinate(5, 4),
+            Coordinate(5, 5)
+        )
+
+        val result = getOverlappedCoords(claims)
+        assertThat(result).containsAll(expectedCoordinates)
+        assertThat(result.size).isEqualTo(expectedCoordinates.size)
+
+    }
+
+    @Test
+    fun `show me the answer to day 3 part 1`(){
+        val claims = getFile("advent-of-code-input-day-3.txt").readLines().map { ClothClaim.from(it) }
+        val overlappedCoords = getOverlappedCoords(claims)
+        println("The answer to part 1 is: ${overlappedCoords.size} square inches are withing 2 or more claims")
+    }
+
+    private fun getOverlappedCoords(claims: List<ClothClaim>): List<Coordinate> {
+        val overlappedCoords = mutableListOf<Coordinate>()
+
+        claims.forEachIndexed { index, claim ->
+            val remainingClaims = claims.subList(index + 1, claims.size)
+            for (otherClaim in remainingClaims) {
+                overlappedCoords.addAll(claim.getCoordinatesOverlappingWith(otherClaim))
+            }
+        }
+
+        return overlappedCoords.distinct()
+    }
+
+    private fun getFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())
+
 }
+
 
 
 data class ClothClaim(
@@ -131,9 +172,7 @@ data class ClothClaim(
     }
 
     fun overlapsWith(anotherClaim: ClothClaim): Boolean {
-
         val otherArea = anotherClaim.getAreaCoordinates()
-
         return this.getAreaCoordinates().any { it in otherArea }
     }
 

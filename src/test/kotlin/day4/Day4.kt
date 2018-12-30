@@ -2,6 +2,7 @@ package day4
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDate
@@ -57,6 +58,57 @@ class Day4 {
     }
 
     @Test
+    fun `should map two guards for one night each`() {
+        // Given
+        val input =
+            listOf(
+                "[1518-11-01 00:00] Guard #10 begins shift",
+                "[1518-11-01 00:05] falls asleep",
+                "[1518-11-01 00:25] wakes up",
+                "[1518-11-01 00:30] falls asleep",
+                "[1518-11-01 00:55] wakes up",
+                "[1518-11-01 23:57] Guard #11 begins shift",
+                "[1518-11-02 00:03] falls asleep",
+                "[1518-11-02 00:04] wakes up"
+            )
+
+        val guard10Naps = listOf(MidnightNap(5, 25), MidnightNap(30, 55))
+        val guard11Naps = listOf(MidnightNap(3, 4))
+
+        val expected = mapOf(10 to guard10Naps, 11 to guard11Naps)
+
+        assertThat(mapGuardNaps(input)).isEqualTo(expected)
+
+    }
+
+    @Test
+    fun `should map the same guard on duty more than one night`() {
+        // Given
+        val input =
+            listOf(
+                "[1518-11-01 00:00] Guard #10 begins shift",
+                "[1518-11-01 00:05] falls asleep",
+                "[1518-11-01 00:25] wakes up",
+                "[1518-11-01 00:30] falls asleep",
+                "[1518-11-01 00:55] wakes up",
+                "[1518-11-01 23:57] Guard #11 begins shift",
+                "[1518-11-02 00:03] falls asleep",
+                "[1518-11-02 00:04] wakes up",
+                "[1518-11-01 23:58] Guard #10 begins shift",
+                "[1518-11-02 00:02] falls asleep",
+                "[1518-11-02 00:52] wakes up"
+            )
+
+        val guard10Naps = listOf(MidnightNap(5, 25), MidnightNap(30, 55), MidnightNap(2, 52))
+        val guard11Naps = listOf(MidnightNap(3, 4))
+
+        val expected = mapOf(10 to guard10Naps, 11 to guard11Naps)
+
+        assertThat(mapGuardNaps(input)).isEqualTo(expected)
+
+    }
+
+    @Test
     fun `should error if a falls asleep or wakes up record is not as expected`() {
         // Given
         val wrongFallsAsleep =
@@ -104,7 +156,7 @@ class Day4 {
 
         //expect
         val guard10Naps = listOf(MidnightNap(5, 25), MidnightNap(30, 55), MidnightNap(24, 29))
-        val guard99Naps = listOf(MidnightNap(40, 50), MidnightNap(30, 55), MidnightNap(36, 46), MidnightNap(45, 55))
+        val guard99Naps = listOf(MidnightNap(40, 50), MidnightNap(36, 46), MidnightNap(45, 55))
 
         val expected = mapOf(10 to guard10Naps, 99 to guard99Naps)
 
@@ -114,27 +166,52 @@ class Day4 {
 
     private fun mapGuardNaps(input: List<String>): Map<GuardId, List<MidnightNap>> {
 
+        val napDiary = mutableMapOf<GuardId, MutableList<MidnightNap>>()
+
+        val records = input.iterator()
+
+        var napsForCurrentGuard = mutableListOf<MidnightNap>()
+
+        while (records.hasNext()) {
+            val record = records.next()
+            if (record.contains("Guard")) {
+                napsForCurrentGuard = retrieveNapListForGuard(record, napDiary)
+            } else {
+                napsForCurrentGuard.addNap(record, records)
+            }
+        }
+
+        return napDiary
+    }
+
+    private fun retrieveNapListForGuard(
+        record: String,
+        napRecord: MutableMap<GuardId, MutableList<MidnightNap>>
+    ): MutableList<MidnightNap> {
+        return napRecord.getOrPut(grabGuardId(record)) { mutableListOf() }
+    }
+
+    private fun MutableList<MidnightNap>.addNap(
+        fallsAsleepRecord: String,
+        remainingRecords: Iterator<String>
+    ) {
+        if (!fallsAsleepRecord.contains("asleep")) throw IllegalArgumentException("expected a falls asleep record, got $fallsAsleepRecord")
+
+        val wakesUpRecord = remainingRecords.next()
+        if (!wakesUpRecord.contains("wakes")) throw IllegalArgumentException("expected a wakes up record, got $wakesUpRecord")
+
+        this.add(
+            MidnightNap(
+                grabMinutes(fallsAsleepRecord),
+                grabMinutes(wakesUpRecord)
+            )
+        )
+    }
+
+    private fun grabGuardId(shiftStartRecord: String): Int {
         //So cryptic! don't like it
         val guardIdRegex = "#(\\d*)".toRegex()
-        val grabMinutesRegex = ":(\\d\\d)".toRegex()
-
-        val guardId = guardIdRegex.find(input.first())!!.groupValues.get(1).toInt()
-
-        val naps = input
-            .filterNot { it.contains("Guard") }
-            .chunked(2)
-            .map { (fallsAsleepRecord, wakesUpRecord) ->
-                
-                if (!fallsAsleepRecord.contains("asleep")) throw IllegalArgumentException("Expected a falls asleep record, got $fallsAsleepRecord")
-                if (!wakesUpRecord.contains("wakes")) throw IllegalArgumentException("Expected a wakes up record, got $wakesUpRecord")
-
-                MidnightNap(
-                    grabMinutes(fallsAsleepRecord),
-                    grabMinutes(wakesUpRecord)
-                )
-            }
-
-        return mapOf(guardId to naps)
+        return guardIdRegex.find(shiftStartRecord)!!.groupValues.get(1).toInt()
     }
 
     //TODO Nasty Nasty regex and bangs
@@ -145,6 +222,7 @@ class Day4 {
 
 
     @Test
+    @Disabled("in progress 2")
     fun `should find the guard with the most minutes asleep`() {
         val input = getSortedFile("guard-shift-example-1.txt")
         assertThat(findGuardWhoSleepsTheMost(input)).isEqualTo(10)

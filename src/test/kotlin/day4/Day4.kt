@@ -2,14 +2,10 @@ package day4
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
-import java.time.LocalDate
 
 class Day4 {
-
-    val firstDecember = LocalDate.of(1519, 12, 1)
 
     @Test
     fun `should sort guard sleep pattern file into chronological order`() {
@@ -34,7 +30,7 @@ class Day4 {
             )
 
 
-        assertThat(sleepRecord.timeAsleepToday()).isEqualTo(21)
+        assertThat(sleepRecord.totalTimeAsleep()).isEqualTo(21)
     }
 
     @Test
@@ -164,6 +160,18 @@ class Day4 {
 
     }
 
+    @Test
+    fun `should find the guard with the most minutes asleep`() {
+        val input = getSortedFile("guard-shift-example-1.txt")
+        assertThat(findGuardWhoSleepsTheMost(input)).isEqualTo(10)
+    }
+
+    @Test
+    fun `show me the guard who sleeps the most`(){
+        val guard = findGuardWhoSleepsTheMost(getSortedFile("advent-of-code-input-day-4.txt"))
+        println("The guard who sleeps the most is $guard")
+    }
+
     private fun mapGuardNaps(input: List<String>): Map<GuardId, List<MidnightNap>> {
 
         val napDiary = mutableMapOf<GuardId, MutableList<MidnightNap>>()
@@ -220,21 +228,11 @@ class Day4 {
         return grabMinutesRegex.find(guardRecord)!!.groupValues[1].toInt()
     }
 
-
-    @Test
-    @Disabled("in progress 2")
-    fun `should find the guard with the most minutes asleep`() {
-        val input = getSortedFile("guard-shift-example-1.txt")
-        assertThat(findGuardWhoSleepsTheMost(input)).isEqualTo(10)
-    }
-
     private fun findGuardWhoSleepsTheMost(input: List<String>): GuardId {
-
-        val guardNaps: Map<GuardId, List<MidnightNap>> = mutableMapOf()
-
-
-
-        return 0
+        return mapGuardNaps(input)
+            .mapValues { it.value.totalTimeAsleep() }
+            .maxBy { it.value }!!   //Cheating...we definitely have an entry so this will never be null
+            .key
     }
 
 
@@ -259,7 +257,7 @@ data class Guard(
 //        .sum()
 //}
 
-private fun List<MidnightNap>.timeAsleepToday(): Int = this
+private fun List<MidnightNap>.totalTimeAsleep(): Int = this
     .map { it.endMinute - it.startMinute }
     .sum()
 

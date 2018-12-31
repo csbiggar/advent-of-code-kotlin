@@ -163,10 +163,10 @@ class Day4 {
     @Test
     fun `should find the guard with the most minutes asleep`() {
         val testInput = getSortedFile("guard-shift-example-1.txt")
-        assertThat(findGuardWhoSleepsTheMost(testInput)).isEqualTo(10)
+        assertThat(findGuardWhoSleepsTheMost(mapGuardNaps(testInput))).isEqualTo(10)
 
-        val realInput = getSortedFile("advent-of-code-input-day-4.txt")
-        assertThat(findGuardWhoSleepsTheMost(realInput)).isEqualTo(2663)
+        //Check real data
+        assertThat(findGuardWhoSleepsTheMost(realGuardNapDiaries)).isEqualTo(2663)
     }
 
     @Test
@@ -189,25 +189,21 @@ class Day4 {
 
     @Test
     fun `show me the guard who sleeps the most`() {
-        val guard = findGuardWhoSleepsTheMost(getSortedFile("advent-of-code-input-day-4.txt"))
+        val guard = findGuardWhoSleepsTheMost(realGuardNapDiaries)
         println("The guard who sleeps the most is $guard")
     }
 
     @Test
     fun `show me guard 2663's most common minute asleep`() {
-        val guardNapDiaries = mapGuardNaps(getSortedFile("advent-of-code-input-day-4.txt"))
-        val mostCommonMinute = findMostCommonMinuteAsleep(guardNapDiaries.getValue(2663))
+        val mostCommonMinute = findMostCommonMinuteAsleep(realGuardNapDiaries.getValue(2663))
         println("Guard is asleep mostly at minute $mostCommonMinute")
     }
 
     @Test
     fun `show me the answer to day 4 part 1`() {
-        val guardNapDiaries = mapGuardNaps(getSortedFile("advent-of-code-input-day-4.txt"))
-        val sleepiestGuardId = findGuardWhoSleepsTheMost(getSortedFile("advent-of-code-input-day-4.txt"))
-        val mostCommonMinute = findMostCommonMinuteAsleep(guardNapDiaries.getValue(sleepiestGuardId))
-
+        val sleepiestGuardId = findGuardWhoSleepsTheMost(realGuardNapDiaries)
+        val mostCommonMinute = findMostCommonMinuteAsleep(realGuardNapDiaries.getValue(sleepiestGuardId))
         println("Guard who sleeps the most is $sleepiestGuardId, most common minute is $mostCommonMinute. Answer: ${sleepiestGuardId * mostCommonMinute}")
-
     }
 
     private fun mapGuardNaps(input: List<String>): Map<GuardId, List<MidnightNap>> {
@@ -266,8 +262,8 @@ class Day4 {
         return grabMinutesRegex.find(guardRecord)!!.groupValues[1].toInt()
     }
 
-    private fun findGuardWhoSleepsTheMost(input: List<String>): GuardId {
-        return mapGuardNaps(input)
+    private fun findGuardWhoSleepsTheMost(guardNapDiaries: Map<GuardId, List<MidnightNap>>): GuardId {
+        return guardNapDiaries
             .mapValues { it.value.totalTimeAsleep() }
             .maxBy { it.value }!!   //Cheating...we definitely have an entry so this will never be null
             .key
@@ -278,17 +274,18 @@ class Day4 {
             .flatMap { it.minutesAsleep }
             .groupBy { it }
             .mapValues { (_, listOfOccurrences) -> listOfOccurrences.size }
-            .maxBy { it.value }!!
+            .maxBy { it.value }!! //?? how do we get rid of the bangs
             .key
     }
 
+    private val realGuardNapDiaries: Map<GuardId, List<MidnightNap>>
+        get() = mapGuardNaps(getSortedFile("advent-of-code-input-day-4.txt"))
 
     private fun getSortedFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())
         .readLines()
         .sorted()
-
-
 }
+
 typealias GuardId = Int
 
 private fun List<MidnightNap>.totalTimeAsleep(): Int = this

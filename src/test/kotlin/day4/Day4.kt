@@ -241,11 +241,11 @@ class Day4 {
         println("The guard most frequently asleep on the same minute is $guardId, and the minute is $minuteMostAsleep. Answer is: ${guardId * minuteMostAsleep}")
     }
 
-    private fun mapGuardNaps(input: List<String>): Map<GuardId, List<MidnightNap>> {
+    private fun mapGuardNaps(napRecords: List<String>): Map<GuardId, List<MidnightNap>> {
 
         val napDiary = mutableMapOf<GuardId, MutableList<MidnightNap>>()
 
-        val records = input.iterator()
+        val records = napRecords.iterator()
 
         var napsForCurrentGuard = mutableListOf<MidnightNap>()
 

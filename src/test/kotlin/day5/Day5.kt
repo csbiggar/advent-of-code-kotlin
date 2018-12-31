@@ -57,9 +57,9 @@ class Day5 {
 
     @Test
     fun `should additionally remove all occurrences of problem letter`() {
-        assertThat(process("dabAcCaCBAcCcaDA", problemUnit = 'a')).isEqualTo("dbCBcD")
-        assertThat(process("dabAcCaCBAcCcaDA", problemUnit = 'b')).isEqualTo("daCAcaDA")
-        assertThat(process("dabAcCaCBAcCcaDA", problemUnit = 'c')).isEqualTo("daDA")
+        assertThat(process("dabAcCaCBAcCcaDA", problemUnitToRemove = 'a')).isEqualTo("dbCBcD")
+        assertThat(process("dabAcCaCBAcCcaDA", problemUnitToRemove = 'b')).isEqualTo("daCAcaDA")
+        assertThat(process("dabAcCaCBAcCcaDA", problemUnitToRemove = 'c')).isEqualTo("daDA")
     }
 
     @Test
@@ -68,20 +68,24 @@ class Day5 {
         val (letter, reducedPolymer) =
                 ('a'..'z')
                     .map {
-                        it to process(polymer, problemUnit = it)
+                        it to process(polymer, problemUnitToRemove = it)
                     }.minBy { it.second.length }!!
 
         println("The problem letter is $letter and removing this gives a shortest length of ${reducedPolymer.length}")
+
+        //Test it too so we can do a bit of refactoring
+        assertThat(letter).`as`("letter to remove").isEqualTo('m')
+        assertThat(reducedPolymer.length).`as`("final length").isEqualTo(4572)
     }
 
-    private fun process(polymer: String, problemUnit: Char? = null): String {
-        val polymerWithProblemUnitRemoved = problemUnit
-            ?.let { polymer.replace(problemUnit.toString(), "", ignoreCase = true) }
+    private fun process(polymer: String, problemUnitToRemove: Char? = null): String {
+        val polymerWithProblemUnitRemoved = problemUnitToRemove
+            ?.let { polymer.replace(problemUnitToRemove.toString(), "", ignoreCase = true) }
             ?: polymer
 
         val reductionViaEvenChunks = polymerWithProblemUnitRemoved.pairUpAndReduce()
 
-        if (reductionViaEvenChunks == "" || reductionViaEvenChunks.length < 2) return reductionViaEvenChunks
+        if (reductionViaEvenChunks.length < 2) return reductionViaEvenChunks
 
         val reductionViaOddChunks = reductionViaEvenChunks
             .drop(1)

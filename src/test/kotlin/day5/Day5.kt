@@ -44,19 +44,42 @@ class Day5 {
     }
 
     @Test
-    fun `should reduce a more complex example`(){
+    fun `should reduce a more complex example`() {
         assertThat(process("dabAcCaCBAcCcaDA")).isEqualTo("dabCBAcaDA")
     }
 
     @Test
-    fun `show me the answer to part 1 - number of units left after reduction`(){
+    fun `show me the answer to part 1 - number of units left after reduction`() {
         val polymer = File(javaClass.getResource("advent-of-code-input-day-5.txt").toURI()).readText()
         val reducedPolymer = process(polymer)
         println("The size of the reduced polymer is ${reducedPolymer.length}")
     }
 
-    private fun process(polymer: String): String {
-        val reductionViaEvenChunks = polymer.pairUpAndReduce()
+    @Test
+    fun `should additionally remove all occurrences of problem letter`() {
+        assertThat(process("dabAcCaCBAcCcaDA", problemUnit = 'a')).isEqualTo("dbCBcD")
+        assertThat(process("dabAcCaCBAcCcaDA", problemUnit = 'b')).isEqualTo("daCAcaDA")
+        assertThat(process("dabAcCaCBAcCcaDA", problemUnit = 'c')).isEqualTo("daDA")
+    }
+
+    @Test
+    fun `show me the answer to part 2 - number of units left after reduction + removal of problem unit`() {
+        val polymer = File(javaClass.getResource("advent-of-code-input-day-5.txt").toURI()).readText()
+        val (letter, reducedPolymer) =
+                ('a'..'z')
+                    .map {
+                        it to process(polymer, problemUnit = it)
+                    }.minBy { it.second.length }!!
+
+        println("The problem letter is $letter and removing this gives a shortest length of ${reducedPolymer.length}")
+    }
+
+    private fun process(polymer: String, problemUnit: Char? = null): String {
+        val polymerWithProblemUnitRemoved = problemUnit
+            ?.let { polymer.replace(problemUnit.toString(), "", ignoreCase = true) }
+            ?: polymer
+
+        val reductionViaEvenChunks = polymerWithProblemUnitRemoved.pairUpAndReduce()
 
         if (reductionViaEvenChunks == "" || reductionViaEvenChunks.length < 2) return reductionViaEvenChunks
 

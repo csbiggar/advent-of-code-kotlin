@@ -162,14 +162,52 @@ class Day4 {
 
     @Test
     fun `should find the guard with the most minutes asleep`() {
-        val input = getSortedFile("guard-shift-example-1.txt")
-        assertThat(findGuardWhoSleepsTheMost(input)).isEqualTo(10)
+        val testInput = getSortedFile("guard-shift-example-1.txt")
+        assertThat(findGuardWhoSleepsTheMost(testInput)).isEqualTo(10)
+
+        val realInput = getSortedFile("advent-of-code-input-day-4.txt")
+        assertThat(findGuardWhoSleepsTheMost(realInput)).isEqualTo(2663)
     }
 
     @Test
-    fun `show me the guard who sleeps the most`(){
+    fun `should find the most common minute asleep`() {
+        val input1 = listOf(
+            MidnightNap(1, 3),
+            MidnightNap(2, 4)
+        )
+
+        assertThat(findMostCommonMinuteAsleep(input1)).isEqualTo(2)
+
+        val input2 = listOf(
+            MidnightNap(5, 25),
+            MidnightNap(30, 55),
+            MidnightNap(24, 29)
+        )
+
+        assertThat(findMostCommonMinuteAsleep(input2)).isEqualTo(24)
+    }
+
+    @Test
+    fun `show me the guard who sleeps the most`() {
         val guard = findGuardWhoSleepsTheMost(getSortedFile("advent-of-code-input-day-4.txt"))
         println("The guard who sleeps the most is $guard")
+    }
+
+    @Test
+    fun `show me guard 2663's most common minute asleep`() {
+        val guardNapDiaries = mapGuardNaps(getSortedFile("advent-of-code-input-day-4.txt"))
+        val mostCommonMinute = findMostCommonMinuteAsleep(guardNapDiaries.getValue(2663))
+        println("Guard is asleep mostly at minute $mostCommonMinute")
+    }
+
+    @Test
+    fun `show me the answer to day 4 part 1`() {
+        val guardNapDiaries = mapGuardNaps(getSortedFile("advent-of-code-input-day-4.txt"))
+        val sleepiestGuardId = findGuardWhoSleepsTheMost(getSortedFile("advent-of-code-input-day-4.txt"))
+        val mostCommonMinute = findMostCommonMinuteAsleep(guardNapDiaries.getValue(sleepiestGuardId))
+
+        println("Guard who sleeps the most is $sleepiestGuardId, most common minute is $mostCommonMinute. Answer: ${sleepiestGuardId * mostCommonMinute}")
+
     }
 
     private fun mapGuardNaps(input: List<String>): Map<GuardId, List<MidnightNap>> {
@@ -235,6 +273,15 @@ class Day4 {
             .key
     }
 
+    private fun findMostCommonMinuteAsleep(input: List<MidnightNap>): Int {
+        return input
+            .flatMap { it.minutesAsleep }
+            .groupBy { it }
+            .mapValues { (_, listOfOccurrences) -> listOfOccurrences.size }
+            .maxBy { it.value }!!
+            .key
+    }
+
 
     private fun getSortedFile(relativePath: String) = File(javaClass.getResource(relativePath).toURI())
         .readLines()
@@ -244,19 +291,6 @@ class Day4 {
 }
 typealias GuardId = Int
 
-data class Guard(
-    val id: Int
-)
-
-//data class SleepRecord(
-//    val date: LocalDate,
-//    val naps: List<MidnightNap>
-//) {
-//    fun timeAsleepToday(): Int = naps
-//        .map { it.endMinute - it.startMinute }
-//        .sum()
-//}
-
 private fun List<MidnightNap>.totalTimeAsleep(): Int = this
     .map { it.endMinute - it.startMinute }
     .sum()
@@ -264,7 +298,10 @@ private fun List<MidnightNap>.totalTimeAsleep(): Int = this
 data class MidnightNap(
     val startMinute: Int,
     val endMinute: Int
-)
+) {
+    val minutesAsleep: List<Int>
+        get() = (startMinute..(endMinute - 1)).toList()
+}
 
 
 

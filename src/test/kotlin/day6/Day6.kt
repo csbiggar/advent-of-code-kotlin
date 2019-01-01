@@ -88,7 +88,7 @@ class Day6 {
     }
 
     @Test
-    fun `should find the coordinate with the biggest distance from others in the example data `() {
+    fun `should find coordinate furthest from others in the example data `() {
         val A = Coordinate(1, 1)
         val B = Coordinate(1, 6)
         val C = Coordinate(8, 3)
@@ -120,6 +120,27 @@ class Day6 {
         val (coordinate, area) = findCoordinateFurthersFromOthers(specialCoordinates)
 
         println("The coordinate that is furthest from others is $coordinate and its area is $area")
+    }
+
+    @Test
+    fun `should find total distance to all special coordinates for a given coordinate`() {
+        val A = Coordinate(1, 1)
+        val B = Coordinate(1, 6)
+        val C = Coordinate(8, 3)
+        val D = Coordinate(3, 4)
+        val E = Coordinate(5, 5)
+        val F = Coordinate(8, 9)
+
+        val specialCoords = listOf(A, B, C, D, E, F)
+
+        assertThat(specialCoords.sumOfDistanceOfAllTo(Coordinate(3, 3)))
+            .`as`("distance from a non-special coordinate")
+            .isEqualTo(30)
+
+        assertThat(specialCoords.sumOfDistanceOfAllTo(Coordinate(1, 1)))
+            .`as`("distance from a special coordinate (one which exists in the list)")
+            .isEqualTo(42)
+
     }
 
     private fun mapCoordinate(coordinate: String): Coordinate {
@@ -154,6 +175,9 @@ class Day6 {
         )
     }
 }
+
+private fun List<Coordinate>.sumOfDistanceOfAllTo(otherCoordinate: Coordinate): Int =
+    this.map { it.distanceFrom(otherCoordinate) }.sum()
 
 private fun List<Coordinate>.findNearestTo(otherCoordinate: Coordinate): Coordinate {
     val coordinatesSortedByDistance = this

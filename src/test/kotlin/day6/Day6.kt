@@ -17,33 +17,55 @@ class Day6 {
 
     @Test
     fun `should find extremities of a list of coordinates`() {
+        //Same x, different y
         val sameXDifferentY = listOf(
             Coordinate(1, 10),
             Coordinate(1, 2)
         )
 
         assertThat(createGrid(sameXDifferentY)).`as`("y coords out of order")
-            .isEqualTo(Grid(Coordinate(1, 2), Coordinate(1, 10)))
+            .isEqualTo(
+                Grid(
+                    minX = 1,
+                    maxX = 1,
+                    minY = 2,
+                    maxY = 10
+                )
+            )
 
+        //same y, different x
         val sameYDifferentX = listOf(
             Coordinate(10, 1),
             Coordinate(2, 1)
         )
 
         assertThat(createGrid(sameYDifferentX)).`as`("x coords out of order")
-            .isEqualTo(Grid(Coordinate(2, 1), Coordinate(10, 1)))
+            .isEqualTo(
+                Grid(
+                    minX = 2,
+                    maxX = 10,
+                    minY = 1,
+                    maxY = 1
+                )
+            )
 
-        val moreThanTwoCoords = listOf(
-            Coordinate(8, 3),
-            Coordinate(1, 6),
-            Coordinate(1, 1),
-            Coordinate(5, 5),
-            Coordinate(3, 4),
-            Coordinate(8, 9)
+
+        //Extremity of grid is not one of the special coords - eg here, bottom left corner is (1,10) which is not in the list
+        val maxYIsNotMaxX = listOf(
+            Coordinate(1, 5),
+            Coordinate(2, 10),
+            Coordinate(3, 1)
         )
 
-        assertThat(createGrid(moreThanTwoCoords)).`as`("many coordinates")
-            .isEqualTo(Grid(Coordinate(1, 1), Coordinate(8, 9)))
+        assertThat(createGrid(maxYIsNotMaxX)).`as`("extremities are not one of the special coordinates")
+            .isEqualTo(
+                Grid(
+                    minX = 1,
+                    maxX = 3,
+                    minY = 1,
+                    maxY = 10
+                )
+            )
     }
 
     @Test
@@ -85,10 +107,14 @@ class Day6 {
 //    }
 
     private fun createGrid(list: List<Coordinate>): Grid {
-        val sortedCoordinates = list
-            .sortedBy { it.y }
-            .sortedBy { it.x }
-        return Grid(sortedCoordinates[0], sortedCoordinates[list.size - 1])
+        val sortedByX = list.sortedBy { it.x }
+        val sortedByY = list.sortedBy { it.y }
+        return Grid(
+            minX = sortedByX.first().x,
+            maxX = sortedByX.last().x,
+            minY = sortedByY.first().y,
+            maxY = sortedByY.last().y
+        )
     }
 }
 
@@ -124,15 +150,17 @@ data class Coordinate(val x: Int, val y: Int) {
 }
 
 data class Grid(
-    val topLeft: Coordinate,
-    val bottomRight: Coordinate
+    val minX: Int,
+    val maxX: Int,
+    val minY: Int,
+    val maxY: Int
 ) {
     fun getAllCoordsInGrid() {
-        (topLeft.x..bottomRight.x).map { x ->
-            (topLeft.y..bottomRight.y).map { y ->
-                Coordinate(x, y)
-            }
-        }
+//        (topLeft.x..bottomRight.x).map { x ->
+//            (topLeft.y..bottomRight.y).map { y ->
+//                Coordinate(x, y)
+//            }
+//        }y
     }
 }
 

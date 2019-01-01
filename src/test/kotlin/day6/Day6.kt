@@ -7,6 +7,20 @@ import kotlin.math.absoluteValue
 
 class Day6 {
 
+    private val A = Coordinate(1, 1)
+    private val B = Coordinate(1, 6)
+    private val C = Coordinate(8, 3)
+    private val D = Coordinate(3, 4)
+    private val E = Coordinate(5, 5)
+    private val F = Coordinate(8, 9)
+
+    private val exampleSpecialCoordinates = listOf(A, B, C, D, E, F)
+
+    private val specialCoordinates: List<Coordinate>
+        get() = File(javaClass.getResource("advent-of-code-input-day-6.txt").toURI())
+            .readLines()
+            .map { mapCoordinate(it) }
+
     @Test
     fun `should find the distance of one coordinate from another`() {
         assertThat(Coordinate(1, 1).distanceFrom(Coordinate(2, 2))).`as`("different x and y axis").isEqualTo(2)
@@ -71,39 +85,17 @@ class Day6 {
 
     @Test
     fun `should find the nearest coordinate to another given coordinate`() {
-        val a = Coordinate(1, 1)
-        val b = Coordinate(1, 6)
-        val c = Coordinate(8, 3)
-        val d = Coordinate(3, 4)
-        val e = Coordinate(5, 5)
-        val f = Coordinate(8, 9)
+        assertThat(exampleSpecialCoordinates.findNearestTo(Coordinate(1, 2))).isEqualTo(A)
+        assertThat(exampleSpecialCoordinates.findNearestTo(Coordinate(4, 4))).isEqualTo(D)
 
-        val coords = listOf(a, b, c, d, e, f)
-
-        assertThat(coords.findNearestTo(Coordinate(1, 2))).isEqualTo(a)
-        assertThat(coords.findNearestTo(Coordinate(4, 4))).isEqualTo(d)
-
-        assertThat(coords.findNearestTo((Coordinate(5, 1)))).`as`("equidistant coords should map as")
+        assertThat(exampleSpecialCoordinates.findNearestTo((Coordinate(5, 1)))).`as`("equidistant coords should map as")
             .isEqualTo(Coordinate.NONE)
     }
 
     @Test
     fun `should find coordinate furthest from others in the example data `() {
-        val A = Coordinate(1, 1)
-        val B = Coordinate(1, 6)
-        val C = Coordinate(8, 3)
-        val D = Coordinate(3, 4)
-        val E = Coordinate(5, 5)
-        val F = Coordinate(8, 9)
-
-        val coords = listOf(A, B, C, D, E, F)
-
-        //when
-        val specialCoordinates = findCoordinateFurthersFromOthers(coords)
-
-        //then
-        assertThat(specialCoordinates).`as`("coordinate and biggest distance").isEqualTo(Pair(E, 17))
-
+        val furthestCoordinate = findCoordinateFurthersFromOthers(exampleSpecialCoordinates)
+        assertThat(furthestCoordinate).`as`("coordinate and biggest distance").isEqualTo(Pair(E, 17))
     }
 
     @Test
@@ -113,34 +105,59 @@ class Day6 {
 
     @Test
     fun `show me the coordinate furthest from others in the real data, and the answer to part 1`() {
-        val specialCoordinates = File(javaClass.getResource("advent-of-code-input-day-6.txt").toURI())
-            .readLines()
-            .map { mapCoordinate(it) }
-
         val (coordinate, area) = findCoordinateFurthersFromOthers(specialCoordinates)
-
         println("The coordinate that is furthest from others is $coordinate and its area is $area")
     }
 
     @Test
     fun `should find total distance to all special coordinates for a given coordinate`() {
-        val A = Coordinate(1, 1)
-        val B = Coordinate(1, 6)
-        val C = Coordinate(8, 3)
-        val D = Coordinate(3, 4)
-        val E = Coordinate(5, 5)
-        val F = Coordinate(8, 9)
-
-        val specialCoords = listOf(A, B, C, D, E, F)
-
-        assertThat(specialCoords.sumOfDistanceOfAllTo(Coordinate(3, 3)))
+        assertThat(exampleSpecialCoordinates.sumOfDistanceOfAllTo(Coordinate(3, 3)))
             .`as`("distance from a non-special coordinate")
             .isEqualTo(30)
 
-        assertThat(specialCoords.sumOfDistanceOfAllTo(Coordinate(1, 1)))
+        assertThat(exampleSpecialCoordinates.sumOfDistanceOfAllTo(Coordinate(1, 1)))
             .`as`("distance from a special coordinate (one which exists in the list)")
             .isEqualTo(42)
+    }
 
+    @Test
+    fun `should find coordinates less than a given distance from all special coordinates`() {
+
+        val maxDistance = 32
+        val result = findSafeRegion(exampleSpecialCoordinates, maxDistance)
+
+        assertThat(result).`as`("test data safe region coordinates").containsAll(
+            listOf(
+                Coordinate(2, 4),
+                Coordinate(2, 5),
+
+                Coordinate(3, 3),
+                Coordinate(3, 4),
+                Coordinate(3, 5),
+                Coordinate(3, 6),
+
+                Coordinate(4, 3),
+                Coordinate(4, 4),
+                Coordinate(4, 5),
+                Coordinate(4, 6),
+
+                Coordinate(5, 3),
+                Coordinate(5, 4),
+                Coordinate(5, 5),
+                Coordinate(5, 6),
+
+                Coordinate(6, 4),
+                Coordinate(6, 5)
+                )
+        )
+
+        assertThat(result.size).`as`("test data safe region size").isEqualTo(16)
+    }
+
+    @Test
+    fun `show me the size of the real safe region, and answer to part 2`(){
+        val safeRegionSize = findSafeRegion(specialCoordinates, 10000).size
+        println("The safe region size is $safeRegionSize")
     }
 
     private fun mapCoordinate(coordinate: String): Coordinate {
@@ -174,6 +191,15 @@ class Day6 {
             maxY = sortedByY.last().y
         )
     }
+
+    private fun findSafeRegion(specialCoordinates: List<Coordinate>, maxDistance: Int): List<Coordinate> {
+        return createGrid(specialCoordinates)
+            .allCoords()
+            .map { coordinate -> coordinate to specialCoordinates.sumOfDistanceOfAllTo(coordinate) }
+            .filter { (_, distance) -> distance < maxDistance }
+            .map { (coordinate, _) -> coordinate }
+    }
+
 }
 
 private fun List<Coordinate>.sumOfDistanceOfAllTo(otherCoordinate: Coordinate): Int =

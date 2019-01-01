@@ -2,6 +2,7 @@ package day6
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.io.File
 import kotlin.math.absoluteValue
 
 class Day6 {
@@ -86,25 +87,61 @@ class Day6 {
             .isEqualTo(Coordinate.NONE)
     }
 
-//    @Test
-//    fun `should map grid entire grid to the nearest coord in list `() {
-//        val coords = listOf(
-//            Coordinate(1, 1),
-//            Coordinate(1, 4)
-//        )
-//
-//        listNearestCoordsInGrid(coords).containsAll()
-//
-//        createGrid(coords)
-//            .getAllCoordsInGrid()
-//
-//
-//    }
-//
-//    private fun listNearestCoordsInGrid(coords: List<Coordinate>) : List<Coordinate> {
-//
-//
-//    }
+    @Test
+    fun `should find the coordinate with the biggest distance from others in the example data `() {
+        val A = Coordinate(1, 1)
+        val B = Coordinate(1, 6)
+        val C = Coordinate(8, 3)
+        val D = Coordinate(3, 4)
+        val E = Coordinate(5, 5)
+        val F = Coordinate(8, 9)
+
+        val coords = listOf(A, B, C, D, E, F)
+
+        //when
+        val specialCoordinates = findCoordinateFurthersFromOthers(coords)
+
+        //then
+        assertThat(specialCoordinates).`as`("coordinate and biggest distance").isEqualTo(Pair(E, 17))
+
+    }
+
+    @Test
+    fun `should map string to Coordinate`() {
+        assertThat(mapCoordinate("111  , 222")).isEqualTo(Coordinate(111, 222))
+    }
+
+    @Test
+    fun `show me the coordinate furthest from others in the real data, and the answer to part 1`() {
+        val specialCoordinates = File(javaClass.getResource("advent-of-code-input-day-6.txt").toURI())
+            .readLines()
+            .map { mapCoordinate(it) }
+
+        val (coordinate, area) = findCoordinateFurthersFromOthers(specialCoordinates)
+
+        println("The coordinate that is furthest from others is $coordinate and its area is $area")
+    }
+
+    private fun mapCoordinate(coordinate: String): Coordinate {
+        coordinate.split(",").let {
+            return Coordinate(
+                x = it[0].trim().toInt(),
+                y = it[1].trim().toInt()
+            )
+        }
+    }
+
+    private fun findCoordinateFurthersFromOthers(specialCoordinates: List<Coordinate>): Pair<Coordinate, Area> {
+        return createGrid(specialCoordinates)
+            .allCoords()
+            .map { thisCoord ->
+                specialCoordinates.findNearestTo(thisCoord)
+            }
+            .groupBy { it }
+            .mapValues { (_, numberOfSquares) -> numberOfSquares.size }
+            .maxBy { (_, area) -> area }!!
+            .toPair()
+    }
 
     private fun createGrid(list: List<Coordinate>): Grid {
         val sortedByX = list.sortedBy { it.x }
@@ -137,6 +174,8 @@ private fun List<Coordinate>.findNearestTo(otherCoordinate: Coordinate): Coordin
         closestCoordinate
 }
 
+typealias Area = Int
+
 data class Coordinate(val x: Int, val y: Int) {
     companion object {
         val NONE = Coordinate(-1, -1)
@@ -155,12 +194,12 @@ data class Grid(
     val minY: Int,
     val maxY: Int
 ) {
-    fun getAllCoordsInGrid() {
-//        (topLeft.x..bottomRight.x).map { x ->
-//            (topLeft.y..bottomRight.y).map { y ->
-//                Coordinate(x, y)
-//            }
-//        }y
+    fun allCoords(): List<Coordinate> {
+        return (minX..maxX).flatMap { x ->
+            (minY..maxY).map { y ->
+                Coordinate(x, y)
+            }
+        }
     }
 }
 

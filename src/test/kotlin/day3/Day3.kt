@@ -13,14 +13,14 @@ class Day3 {
 
         val expectedClothClaim1 = ClothClaim(
             id = 1,
-            topLeftCorner = Coordinate(3, 4),
-            bottomRightCorner = Coordinate(6, 8)
+            topLeftCorner = ClothCoordinate(3, 4),
+            bottomRightCorner = ClothCoordinate(6, 8)
         )
 
         val expectedClothClaim2 = ClothClaim(
             id = 1307,
-            topLeftCorner = Coordinate(605, 406),
-            bottomRightCorner = Coordinate(621, 434)
+            topLeftCorner = ClothCoordinate(605, 406),
+            bottomRightCorner = ClothCoordinate(621, 434)
         )
 
         assertThat(ClothClaim.from(claim1)).isEqualTo(expectedClothClaim1)
@@ -31,17 +31,17 @@ class Day3 {
     fun `should generate a list of coordinates representing the area of a claim`() {
         val claim = ClothClaim(
             id = 1,
-            topLeftCorner = Coordinate(2, 3),
-            bottomRightCorner = Coordinate(3, 5)
+            topLeftCorner = ClothCoordinate(2, 3),
+            bottomRightCorner = ClothCoordinate(3, 5)
         )
 
         val expectedCoordinates = listOf(
-            Coordinate(2, 3),
-            Coordinate(2, 4),
-            Coordinate(2, 5),
-            Coordinate(3, 3),
-            Coordinate(3, 4),
-            Coordinate(3, 5)
+            ClothCoordinate(2, 3),
+            ClothCoordinate(2, 4),
+            ClothCoordinate(2, 5),
+            ClothCoordinate(3, 3),
+            ClothCoordinate(3, 4),
+            ClothCoordinate(3, 5)
         )
 
         assertThat(claim.getAreaCoordinates()).containsAll(expectedCoordinates)
@@ -52,10 +52,10 @@ class Day3 {
         val claims = getFile("cloth-claims-example1.txt").readLines().map { ClothClaim.from(it) }
 
         val expectedCoordinates = listOf(
-            Coordinate(4, 4),
-            Coordinate(4, 5),
-            Coordinate(5, 4),
-            Coordinate(5, 5)
+            ClothCoordinate(4, 4),
+            ClothCoordinate(4, 5),
+            ClothCoordinate(5, 4),
+            ClothCoordinate(5, 5)
         )
 
         val result = getOverlappedCoords(claims)
@@ -86,7 +86,7 @@ class Day3 {
         println("The answer to part 1 is: ${nonOverlappingClaim.id} is the non-overlapping claim")
     }
 
-    private fun getOverlappedCoords(claims: List<ClothClaim>): List<Coordinate> {
+    private fun getOverlappedCoords(claims: List<ClothClaim>): List<ClothCoordinate> {
         return claims
             .flatMap { claim -> claim.getAreaCoordinates() }
             .groupBy { it }
@@ -113,8 +113,8 @@ class Day3 {
 
 data class ClothClaim(
     val id: Int,
-    val topLeftCorner: Coordinate,
-    val bottomRightCorner: Coordinate
+    val topLeftCorner: ClothCoordinate,
+    val bottomRightCorner: ClothCoordinate
 ) {
 
     companion object {
@@ -131,21 +131,21 @@ data class ClothClaim(
 
             return ClothClaim(
                 id = claimParts[0].removePrefix("#").toInt(),
-                topLeftCorner = Coordinate(leftIndent + 1, topIndent + 1),
-                bottomRightCorner = Coordinate(leftIndent + width, topIndent + height)
+                topLeftCorner = ClothCoordinate(leftIndent + 1, topIndent + 1),
+                bottomRightCorner = ClothCoordinate(leftIndent + width, topIndent + height)
             )
         }
     }
 
-    fun getAreaCoordinates(): List<Coordinate> {
+    fun getAreaCoordinates(): List<ClothCoordinate> {
         val xRange = topLeftCorner.x..bottomRightCorner.x
         val yRange = topLeftCorner.y..bottomRightCorner.y
 
-        val coords = mutableListOf<Coordinate>()
+        val coords = mutableListOf<ClothCoordinate>()
 
         for (x in xRange) {
             for (y in yRange) {
-                coords.add(Coordinate(x, y))
+                coords.add(ClothCoordinate(x, y))
             }
         }
 
@@ -154,4 +154,4 @@ data class ClothClaim(
 
 }
 
-data class Coordinate(val x: Int, val y: Int)
+data class ClothCoordinate(val x: Int, val y: Int)

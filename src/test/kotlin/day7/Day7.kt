@@ -10,8 +10,8 @@ class Day7 {
 
     @Test
     fun `should sort alphabetically when no dependencies`() {
-        val stepA = StepDependencies(id = A, dependsOn = listOf())
-        val stepB = StepDependencies(id = B, dependsOn = listOf())
+        val stepA = Step(id = A, dependsOn = listOf())
+        val stepB = Step(id = B, dependsOn = listOf())
 
         assertThat(listOf(stepA, stepB).putStepsInOrder()).`as`("A compared to B ").isEqualTo(listOf(A, B))
         assertThat(listOf(stepB, stepA).putStepsInOrder()).`as`("B compared to A ").isEqualTo(listOf(A, B))
@@ -19,18 +19,17 @@ class Day7 {
 
     @Test
     fun `should expect only one instance of each letter`() {
-        val stepA = StepDependencies(id = A, dependsOn = listOf())
-        val anotherStepA = StepDependencies(id = A, dependsOn = listOf())
+        val stepA = Step(id = A, dependsOn = listOf())
+        val anotherStepA = Step(id = A, dependsOn = listOf())
 
         assertThatIllegalArgumentException().isThrownBy { listOf(anotherStepA, stepA).putStepsInOrder() }
             .`as`("A compared to another A")
-
     }
 
     @Test
     fun `should place dependent letter after dependency`() {
-        val stepA = StepDependencies(id = A, dependsOn = listOf(B))
-        val stepB = StepDependencies(id = B, dependsOn = listOf())
+        val stepA = Step(id = A, dependsOn = listOf(B))
+        val stepB = Step(id = B, dependsOn = listOf())
 
         assertThat(listOf(stepA, stepB).putStepsInOrder()).`as`("A compared to B ").isEqualTo(listOf(B, A))
         assertThat(listOf(stepB, stepA).putStepsInOrder()).`as`("B compared to A ").isEqualTo(listOf(B, A))
@@ -38,18 +37,18 @@ class Day7 {
 
     @Test
     fun `should place A, B, C in alphabetical order  when they are not dependent on each other`() {
-        val stepA = StepDependencies(id = A, dependsOn = listOf())
-        val stepB = StepDependencies(id = B, dependsOn = listOf())
-        val stepC = StepDependencies(id = C, dependsOn = listOf())
+        val stepA = Step(id = A, dependsOn = listOf())
+        val stepB = Step(id = B, dependsOn = listOf())
+        val stepC = Step(id = C, dependsOn = listOf())
 
         assertThat(listOf(stepA, stepC, stepB).putStepsInOrder()).`as`("A,C,B").isEqualTo(listOf(A, B, C))
     }
 
     @Test
     fun `should place B and C in alphabetical order before A when both are dependent A`() {
-        val stepA = StepDependencies(id = A, dependsOn = listOf())
-        val stepB = StepDependencies(id = B, dependsOn = listOf(A))
-        val stepC = StepDependencies(id = C, dependsOn = listOf(A))
+        val stepA = Step(id = A, dependsOn = listOf())
+        val stepB = Step(id = B, dependsOn = listOf(A))
+        val stepC = Step(id = C, dependsOn = listOf(A))
 
         assertThat(listOf(stepA, stepB, stepC).putStepsInOrder()).`as`("A,B,C").isEqualTo(listOf(A, B, C))
         assertThat(listOf(stepC, stepB, stepA).putStepsInOrder()).`as`("C,B,A").isEqualTo(listOf(A, B, C))
@@ -57,9 +56,9 @@ class Day7 {
 
     @Test
     fun `should order C,B,A when B is dependent on A and A dependent on C`() {
-        val stepA = StepDependencies(id = A, dependsOn = listOf(C))
-        val stepB = StepDependencies(id = B, dependsOn = listOf(A))
-        val stepC = StepDependencies(id = C, dependsOn = listOf())
+        val stepA = Step(id = A, dependsOn = listOf(C))
+        val stepB = Step(id = B, dependsOn = listOf(A))
+        val stepC = Step(id = C, dependsOn = listOf())
 
         assertThat(listOf(stepA, stepB, stepC).putStepsInOrder()).`as`("A,B,C").isEqualTo(listOf(C, A, B))
         assertThat(listOf(stepC, stepB, stepA).putStepsInOrder()).`as`("C,B,A").isEqualTo(listOf(C, A, B))
@@ -67,12 +66,12 @@ class Day7 {
 
     @Test
     fun `should order test data`() {
-        val stepA = StepDependencies(id = A, dependsOn = listOf(C))
-        val stepB = StepDependencies(id = B, dependsOn = listOf(A))
-        val stepC = StepDependencies(id = C, dependsOn = listOf())
-        val stepD = StepDependencies(id = D, dependsOn = listOf(A))
-        val stepE = StepDependencies(id = E, dependsOn = listOf(B, D, F))
-        val stepF = StepDependencies(id = F, dependsOn = listOf(C))
+        val stepA = Step(id = A, dependsOn = listOf(C))
+        val stepB = Step(id = B, dependsOn = listOf(A))
+        val stepC = Step(id = C, dependsOn = listOf())
+        val stepD = Step(id = D, dependsOn = listOf(A))
+        val stepE = Step(id = E, dependsOn = listOf(B, D, F))
+        val stepF = Step(id = F, dependsOn = listOf(C))
 
         assertThat(listOf(stepA, stepB, stepC, stepD, stepE, stepF).putStepsInOrder())
             .isEqualTo(listOf(C, A, B, D, F, E))
@@ -88,7 +87,7 @@ class Day7 {
     }
 
     @Test
-    fun `should map pairs of steps to dependency to all steps with dependency`() {
+    fun `should map pairs of steps to dependency to all steps with dependency plus time taken`() {
         val ADependsOnC = Pair(A, C)
         val BDependsOnA = Pair(B, A)
 
@@ -96,9 +95,9 @@ class Day7 {
 
         assertThat(result).containsAll(
             listOf(
-                StepDependencies(id = A, dependsOn = listOf(C)),
-                StepDependencies(id = B, dependsOn = listOf(A)),
-                StepDependencies(id = C, dependsOn = listOf())
+                Step(id = A, dependsOn = listOf(C), secondsToComplete = 61),
+                Step(id = B, dependsOn = listOf(A), secondsToComplete = 62),
+                Step(id = C, dependsOn = listOf(), secondsToComplete = 63)
             )
         )
         assertThat(result.size).isEqualTo(3)
@@ -136,7 +135,7 @@ class Day7 {
     }
 }
 
-private fun List<Pair<StepId, Dependency>>.buildStepDependencies(): List<StepDependencies> {
+private fun List<Pair<StepId, Dependency>>.buildStepDependencies(): List<Step> {
     val result = mutableMapOf<StepId, MutableList<StepId>>()
     this.forEach { (step, dependency) ->
         result
@@ -145,12 +144,18 @@ private fun List<Pair<StepId, Dependency>>.buildStepDependencies(): List<StepDep
         result
             .getOrPut(dependency) { mutableListOf() }
     }
-    return result.map { (step, dependencies) -> StepDependencies(step, dependencies.toList()) }
+    return result.map { (step, dependencies) ->
+        Step(
+            id = step,
+            dependsOn = dependencies.toList(),
+            secondsToComplete = 61 + step.ordinal
+        )
+    }
 }
 
 typealias Dependency = StepId
 
-private fun List<StepDependencies>.putStepsInOrder(): List<StepId> {
+private fun List<Step>.putStepsInOrder(): List<StepId> {
     if (distinct().size < size) throw IllegalArgumentException("expecting only one of each letter")
 
     val remainingSteps = toMutableList()
@@ -165,7 +170,7 @@ private fun List<StepDependencies>.putStepsInOrder(): List<StepId> {
 }
 
 private fun doNextStep(
-    remainingSteps: MutableList<StepDependencies>,
+    remainingSteps: MutableList<Step>,
     doneSteps: MutableList<StepId>
 ) {
     val nextStep = remainingSteps.findNextStep()
@@ -175,13 +180,13 @@ private fun doNextStep(
     remainingSteps.removeDependencyOn(nextStep)
 }
 
-private fun List<StepDependencies>.findNextStep(): StepDependencies {
+private fun List<Step>.findNextStep(): Step {
     return sortedBy { it.id }
         .first { it.dependsOn.isEmpty() }
 }
 
-private fun MutableList<StepDependencies>.removeDependencyOn(
-    doneStep: StepDependencies
+private fun MutableList<Step>.removeDependencyOn(
+    doneStep: Step
 ) {
     this.replaceAll { step ->
         step.copy(
@@ -197,7 +202,8 @@ enum class StepId {
     A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
 }
 
-private data class StepDependencies(
+private data class Step(
     val id: StepId,
-    val dependsOn: List<StepId>
+    val dependsOn: List<StepId>,
+    val secondsToComplete: Int = 0
 )

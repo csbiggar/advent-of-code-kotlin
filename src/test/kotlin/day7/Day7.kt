@@ -3,6 +3,7 @@ package day7
 import day7.StepId.*
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -133,18 +134,32 @@ class Day7 {
             .`as`("2 steps, seconds to complete by 2 elves is the maximum of the two").isEqualTo(5)
 
         assertThat(listOf(stepA, stepB, stepC).secondsToCompleteByNumberOfElves(numberOfElves = 2))
-            .`as`("3 steps, seconds to complete by 2 elves is the maximum of (step 1 + step 3) and step 2").isEqualTo(6)
+            .`as`("3 steps, seconds to complete by 2 elves is the maximum of (step A + step C) and step B").isEqualTo(6)
 
         assertThat(listOf(stepC, stepA, stepB).secondsToCompleteByNumberOfElves(numberOfElves = 2))
             .`as`("3 steps the other way around, to check they are sorted alphabetically").isEqualTo(6)
 
         assertThat(listOf(stepC, stepB, stepA, stepD).secondsToCompleteByNumberOfElves(numberOfElves = 2))
-            .`as`("4 steps, seconds to complete by 2 elves is the maximum of (step 1 + step 3) and (step 2 + step 4)")
+            .`as`("4 steps, seconds to complete by 2 elves is the maximum of (step A + step C) and (step B + step 4)")
             .isEqualTo(7)
 
         assertThat(listOf(stepC, stepB, stepA, stepD).secondsToCompleteByNumberOfElves(numberOfElves = 3))
-            .`as`("4 steps, seconds to complete by 3 elves is the maximum of (step 1 + step 4) and (step 2) (step 3)")
+            .`as`("4 steps, seconds to complete by 3 elves is the maximum of (step A + step D) and (step B) (step C)")
             .isEqualTo(9)
+    }
+
+    @Test
+    @Disabled("in progress - does not pass atm")
+    fun `should take into account step dependencies when calculating total time taken`() {
+
+        val stepA = Step(A, listOf(C), 5)
+        val stepB = Step(B, emptyList(), 3)
+        val stepC = Step(C, emptyList(), 1)
+        val stepD = Step(D, emptyList(), 4)
+
+        assertThat(listOf(stepC, stepB, stepA, stepD).secondsToCompleteByNumberOfElves(numberOfElves = 3))
+            .`as`("4 steps, seconds to complete by 3 elves is the maximum of (step B) and (step C + step A) and (step D)")
+            .isEqualTo(6)
     }
 
     private fun findStepOrderForInput(stepDependenciesFileName: String): String {
@@ -166,17 +181,17 @@ class Day7 {
 
 private fun List<Step>.secondsToCompleteByNumberOfElves(numberOfElves: Int): Int {
 
-    val elvesTaskTimes = mutableMapOf<ElfId, SecondsSpentOnTasks>()
+    val timeSpentByEachElf = mutableMapOf<ElfId, SecondsSpentOnTasks>()
 
     this.sortedBy { it.id }
         .map { it.secondsToComplete }
         .forEachIndexed { index, secondsToCompleteCurrentTask ->
             val allocatedToElfId: Int = (index + numberOfElves + 1) % numberOfElves
-            val secondsThisElfHasSpentOnTasks = elvesTaskTimes.getOrPut(allocatedToElfId) { 0 }
-            elvesTaskTimes[allocatedToElfId] = secondsThisElfHasSpentOnTasks + secondsToCompleteCurrentTask
+            val secondsThisElfHasSpentOnTasks = timeSpentByEachElf.getOrPut(allocatedToElfId) { 0 }
+            timeSpentByEachElf[allocatedToElfId] = secondsThisElfHasSpentOnTasks + secondsToCompleteCurrentTask
         }
 
-    return elvesTaskTimes
+    return timeSpentByEachElf
         .map { (_, secondsTakenByThisElfToCompleteTasks) -> secondsTakenByThisElfToCompleteTasks }
         .max()
         ?: throw IllegalArgumentException("No tasks provided!")

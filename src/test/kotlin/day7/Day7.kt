@@ -118,6 +118,35 @@ class Day7 {
         assertThat(stepOrder).isEqualTo("BGKDMJCNEQRSTUZWHYLPAFIVXO")
     }
 
+    @Test
+    fun `should start steps with no dependencies in alphabetical order, finding the total time taken for x elves`() {
+
+        val stepA = Step(A, emptyList(), 5)
+        val stepB = Step(B, emptyList(), 3)
+        val stepC = Step(C, emptyList(), 1)
+        val stepD = Step(D, emptyList(), 4)
+
+        assertThat(listOf(stepA, stepB).secondsToCompleteByNumberOfElves(numberOfElves = 1))
+            .`as`("2 steps, seconds to complete by 1 elf is the sum of both").isEqualTo(8)
+
+        assertThat(listOf(stepA, stepB).secondsToCompleteByNumberOfElves(numberOfElves = 2))
+            .`as`("2 steps, seconds to complete by 2 elves is the maximum of the two").isEqualTo(5)
+
+        assertThat(listOf(stepA, stepB, stepC).secondsToCompleteByNumberOfElves(numberOfElves = 2))
+            .`as`("3 steps, seconds to complete by 2 elves is the maximum of (step 1 + step 3) and step 2").isEqualTo(6)
+
+        assertThat(listOf(stepC, stepA, stepB).secondsToCompleteByNumberOfElves(numberOfElves = 2))
+            .`as`("3 steps the other way around, to check they are sorted alphabetically").isEqualTo(6)
+
+        assertThat(listOf(stepC, stepB, stepA, stepD).secondsToCompleteByNumberOfElves(numberOfElves = 2))
+            .`as`("4 steps, seconds to complete by 2 elves is the maximum of (step 1 + step 3) and (step 2 + step 4)")
+            .isEqualTo(7)
+
+        assertThat(listOf(stepC, stepB, stepA, stepD).secondsToCompleteByNumberOfElves(numberOfElves = 3))
+            .`as`("4 steps, seconds to complete by 3 elves is the maximum of (step 1 + step 4) and (step 2) (step 3)")
+            .isEqualTo(9)
+    }
+
     private fun findStepOrderForInput(stepDependenciesFileName: String): String {
         return File(javaClass.getResource(stepDependenciesFileName).toURI())
             .readLines()
@@ -133,6 +162,25 @@ class Day7 {
         val step = letters[2]
         return Pair(StepId.valueOf(step), StepId.valueOf(dependency))
     }
+}
+
+private fun List<Step>.secondsToCompleteByNumberOfElves(numberOfElves: Int): Int {
+
+    val elvesTaskTimes = mutableMapOf<ElfId, SecondsSpentOnTasks>()
+
+    this.sortedBy { it.id }
+        .map { it.secondsToComplete }
+        .forEachIndexed { index, secondsToCompleteCurrentTask ->
+            val allocatedToElfId: Int = (index + numberOfElves + 1) % numberOfElves
+            val secondsThisElfHasSpentOnTasks = elvesTaskTimes.getOrPut(allocatedToElfId) { 0 }
+            elvesTaskTimes[allocatedToElfId] = secondsThisElfHasSpentOnTasks + secondsToCompleteCurrentTask
+        }
+
+    return elvesTaskTimes
+        .map { (_, secondsTakenByThisElfToCompleteTasks) -> secondsTakenByThisElfToCompleteTasks }
+        .max()
+        ?: throw IllegalArgumentException("No tasks provided!")
+
 }
 
 private fun List<Pair<StepId, Dependency>>.buildStepDependencies(): List<Step> {
@@ -154,6 +202,8 @@ private fun List<Pair<StepId, Dependency>>.buildStepDependencies(): List<Step> {
 }
 
 typealias Dependency = StepId
+typealias ElfId = Int
+typealias SecondsSpentOnTasks = Int
 
 private fun List<Step>.putStepsInOrder(): List<StepId> {
     if (distinct().size < size) throw IllegalArgumentException("expecting only one of each letter")

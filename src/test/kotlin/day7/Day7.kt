@@ -66,21 +66,6 @@ class Day7 {
     }
 
     @Test
-    @Disabled("an idea - in progress")
-    fun `should order C,B,A steps when B is dependent on A and A dependent on C`() {
-        val stepA = Step(id = A, dependsOn = listOf(C))
-        val stepB = Step(id = B, dependsOn = listOf(A))
-        val stepC = Step(id = C, dependsOn = listOf())
-
-        val anotherStepA = Step(id = A, dependsOn = listOf(C))
-        val anotherStepB = Step(id = B, dependsOn = listOf(A))
-        val anotherStepC = Step(id = C, dependsOn = listOf())
-
-        assertThat(listOf(stepA, stepB, stepC).putStepIdsInOrder()).`as`("A,B,C").isEqualTo(listOf(anotherStepA, anotherStepB, anotherStepC))
-        assertThat(listOf(stepC, stepB, stepA).putStepIdsInOrder()).`as`("C,B,A").isEqualTo(listOf(anotherStepC, anotherStepB, anotherStepA))
-    }
-
-    @Test
     fun `should order test data`() {
         val stepA = Step(id = A, dependsOn = listOf(C))
         val stepB = Step(id = B, dependsOn = listOf(A))
@@ -134,6 +119,10 @@ class Day7 {
         assertThat(stepOrder).isEqualTo("BGKDMJCNEQRSTUZWHYLPAFIVXO")
     }
 
+    //-----------
+    //  PART 2
+    //-----------
+
     @Test
     fun `should start steps with no dependencies in alphabetical order, finding the total time taken for x elves`() {
         val stepA = Step(A, emptyList(), 5)
@@ -151,6 +140,23 @@ class Day7 {
 
         assertThat(listOf(stepC, stepA, stepB).secondsToCompleteByNumberOfElves(numberOfElves = 2))
             .`as`("3 steps the other way around, to check they are sorted alphabetically").isEqualTo(6)
+    }
+
+    @Test
+    fun `should provide steps in order rather than just step ids`() {
+        val stepA = Step(id = A, dependsOn = listOf(C))
+        val stepB = Step(id = B, dependsOn = listOf(A))
+        val stepC = Step(id = C, dependsOn = listOf())
+
+        val anotherStepA = Step(id = A, dependsOn = listOf(C))
+        val anotherStepB = Step(id = B, dependsOn = listOf(A))
+        val anotherStepC = Step(id = C, dependsOn = listOf())
+
+        assertThat(listOf(stepA, stepB, stepC).putStepsInOrder()).`as`("A,B,C maps to C,A,B")
+            .isEqualTo(listOf(anotherStepC, anotherStepA, anotherStepB ))
+
+        assertThat(listOf(stepC, stepB, stepA).putStepsInOrder()).`as`("C,B,A maps to C,A,B")
+            .isEqualTo(listOf(anotherStepC, anotherStepA, anotherStepB ))
     }
 
     @Test
@@ -253,8 +259,11 @@ private fun List<Step>.putStepIdsInOrder(): List<StepId> {
     }
 
     return doneSteps
-
 }
+
+private fun List<Step>.putStepsInOrder() = putStepIdsInOrder().map { stepId -> this.getById(stepId) }
+
+private fun List<Step>.getById(id: StepId) = this.first { it.id == id }
 
 private fun doNextStep(
     remainingSteps: MutableList<Step>,

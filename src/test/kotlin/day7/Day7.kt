@@ -7,6 +7,9 @@ import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Test
 import java.io.File
 
+typealias Dependency = StepId
+typealias ElfId = Int
+
 class Day7 {
 
     @Test
@@ -143,23 +146,6 @@ class Day7 {
     }
 
     @Test
-    fun `should provide steps in order rather than just step ids`() {
-        val stepA = Step(id = A, dependsOn = listOf(C))
-        val stepB = Step(id = B, dependsOn = listOf(A))
-        val stepC = Step(id = C, dependsOn = listOf())
-
-        val anotherStepA = Step(id = A, dependsOn = listOf(C))
-        val anotherStepB = Step(id = B, dependsOn = listOf(A))
-        val anotherStepC = Step(id = C, dependsOn = listOf())
-
-        assertThat(listOf(stepA, stepB, stepC).putStepsInOrder()).`as`("A,B,C maps to C,A,B")
-            .isEqualTo(listOf(anotherStepC, anotherStepA, anotherStepB))
-
-        assertThat(listOf(stepC, stepB, stepA).putStepsInOrder()).`as`("C,B,A maps to C,A,B")
-            .isEqualTo(listOf(anotherStepC, anotherStepA, anotherStepB))
-    }
-
-    @Test
     fun `should allocate new tasks to waiting elves`() {
         val stepA = Step(A, emptyList(), 5)
         val stepB = Step(B, emptyList(), 3)
@@ -188,13 +174,23 @@ class Day7 {
             .isEqualTo(16)
     }
 
+    @Test
+    fun `should find time taken for example given in instructions`() {
+        val time = secondsToCompleteSteps(readSteps("sample.txt", baseTimeTaken = 0), numberOfElves = 2)
+        assertThat(time).`as`("Sample data - time take").isEqualTo(15)
+    }
+
     private fun findStepOrderForInput(stepDependenciesFileName: String): String {
+        return readSteps(stepDependenciesFileName)
+            .putStepIdsInOrder()
+            .joinToString("")
+    }
+
+    private fun readSteps(stepDependenciesFileName: String, baseTimeTaken: Int = 60): List<Step> {
         return File(javaClass.getResource(stepDependenciesFileName).toURI())
             .readLines()
             .map { mapFileLineToStepDependencyPair(it) }
-            .collateStepDependencies()
-            .putStepIdsInOrder()
-            .joinToString("")
+            .collateStepDependencies(baseTimeTaken)
     }
 
     private fun mapFileLineToStepDependencyPair(fileLine: String): Pair<StepId, Dependency> {
@@ -208,72 +204,34 @@ class Day7 {
 
 private fun secondsToCompleteSteps(steps: List<Step>, numberOfElves: Int): Int {
 
-    println("------------------")
-    println("     NEW TEST")
-    println("------------------")
-
-
-    //for each second
-    // for each elf
-    //      if elf is free && more to do
-    //          complete step elf is currently working
-    //          allocate next step to elf
-    //          mark next step as in progress
-    //  end-each-elf
-    //end each second
-
     val elvesWorklists = mutableMapOf<ElfId, MutableList<Step>>()
-
-
     val elves = (1..numberOfElves)
-
     val toDoList = steps.toMutableList()
 
     var currentSecond = 0
     while (toDoList.moreToDo()) {
-        println("** Second $currentSecond, remaining steps: ")
-        toDoList.forEach {
-            println("  $it")
-        }
-
         for (elfId in elves) {
-            println("    ELF $elfId")
-
             val thisElfsWorklist = elvesWorklists.getOrPut(elfId) { mutableListOf() }
-
-            println("        -  has worklist ${thisElfsWorklist.map { it.id }}")
-
             val secondElfIsNextFree = thisElfsWorklist.map { it.secondsToComplete }.sum()
+            if (currentSecond >= secondElfIsNextFree) {
 
-            println("        -  is next free at second $secondElfIsNextFree")
-
-            if (currentSecond >= secondElfIsNextFree && toDoList.moreToDo()) {
-                //Mark step as complete
+                //Mark elf's last step as complete
                 thisElfsWorklist
-                    .firstOrNull { it.status != COMPLETE }
+                    .lastOrNull()
                     ?.let {
-                        println("        -  marking step ${it.id} as COMPLETE")
                         toDoList.markAsComplete(it.id)
                     }
 
-                //Allocate next step (if there is one available) & mark as in progress
-                val nextStep = toDoList
+                //Start next available step, if there is one
+                toDoList
                     .findNextStep()
                     ?.let { nextStep ->
-                        println("        -  allocating next step $nextStep")
                         thisElfsWorklist.add(nextStep)
                         toDoList.markAsInProgress(nextStep.id)
                     }
-                    ?: println("        -  WARNING! no steps ready to pick up")
-
-                println("        -  new worklist ${elvesWorklists.get(elfId)?.map { it.id }}")
-
             }
-
         }
-
         currentSecond++
-
     }
 
     return elvesWorklists
@@ -282,25 +240,7 @@ private fun secondsToCompleteSteps(steps: List<Step>, numberOfElves: Int): Int {
         ?: throw IllegalArgumentException("No tasks provided!")
 }
 
-//
-//    val timeSpentByEachElf = mutableMapOf<ElfId, SecondsSpentOnTasks>()
-//
-//    list.sortedBy { it.id }
-//        .map { it.secondsToComplete }
-//        .forEachIndexed { index, secondsToCompleteCurrentTask ->
-//            val allocatedToElfId: Int = (index + numberOfElves + 1) % numberOfElves
-//            val secondsThisElfHasSpentOnTasks = timeSpentByEachElf.getOrPut(allocatedToElfId) { 0 }
-//            timeSpentByEachElf[allocatedToElfId] = secondsThisElfHasSpentOnTasks + secondsToCompleteCurrentTask
-//        }
-//
-//    return timeSpentByEachElf
-//        .map { (_, secondsTakenByThisElfToCompleteTasks) -> secondsTakenByThisElfToCompleteTasks }
-//        .max()
-//        ?: throw IllegalArgumentException("No tasks provided!")
-
-//}
-
-private fun List<Pair<StepId, Dependency>>.collateStepDependencies(): List<Step> {
+private fun List<Pair<StepId, Dependency>>.collateStepDependencies(baseTimeTaken: Int = 60): List<Step> {
     val result = mutableMapOf<StepId, MutableList<StepId>>()
     this.forEach { (step, dependency) ->
         result
@@ -313,14 +253,10 @@ private fun List<Pair<StepId, Dependency>>.collateStepDependencies(): List<Step>
         Step(
             id = step,
             dependsOn = dependencies.toList(),
-            secondsToComplete = 61 + step.ordinal
+            secondsToComplete = baseTimeTaken + step.ordinal + 1
         )
     }
 }
-
-typealias Dependency = StepId
-typealias ElfId = Int
-typealias SecondsSpentOnTasks = Int
 
 private fun List<Step>.putStepIdsInOrder(): List<StepId> {
     if (distinct().size < size) throw IllegalArgumentException("expecting only one of each letter")
@@ -336,8 +272,6 @@ private fun List<Step>.putStepIdsInOrder(): List<StepId> {
 }
 
 private fun MutableList<Step>.moreToDo(): Boolean = any { it.status == TO_DO }
-
-private fun List<Step>.putStepsInOrder() = putStepIdsInOrder().map { stepId -> this.getById(stepId) }
 
 private fun List<Step>.getById(id: StepId) = this.first { it.id == id }
 

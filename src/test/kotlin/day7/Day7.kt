@@ -153,25 +153,24 @@ class Day7 {
         val anotherStepC = Step(id = C, dependsOn = listOf())
 
         assertThat(listOf(stepA, stepB, stepC).putStepsInOrder()).`as`("A,B,C maps to C,A,B")
-            .isEqualTo(listOf(anotherStepC, anotherStepA, anotherStepB ))
+            .isEqualTo(listOf(anotherStepC, anotherStepA, anotherStepB))
 
         assertThat(listOf(stepC, stepB, stepA).putStepsInOrder()).`as`("C,B,A maps to C,A,B")
-            .isEqualTo(listOf(anotherStepC, anotherStepA, anotherStepB ))
+            .isEqualTo(listOf(anotherStepC, anotherStepA, anotherStepB))
     }
 
     @Test
-    @Disabled("in progress - does not pass atm")
     fun `should allocate new tasks to waiting elves`() {
         val stepA = Step(A, emptyList(), 5)
         val stepB = Step(B, emptyList(), 3)
         val stepC = Step(C, emptyList(), 1)
         val stepD = Step(D, emptyList(), 4)
 
-        assertThat(listOf(stepC, stepB, stepA, stepD).secondsToCompleteByNumberOfElves(numberOfElves = 2))
-            .`as`("4 steps, 2 elves: Next task should be allocated to the elf finished first: A + D, B + C")
-            .isEqualTo(9)
+        assertThat(findTimeWhenTasksRunInParallel(listOf(stepC, stepB, stepA, stepD), numberOfElves = 2))
+            .`as`("4 steps, 2 elves: Next task should be allocated to the elf finished first: A,  B + C + D")
+            .isEqualTo(8)
 
-        assertThat(listOf(stepC, stepB, stepA, stepD).secondsToCompleteByNumberOfElves(numberOfElves = 3))
+        assertThat(findTimeWhenTasksRunInParallel(listOf(stepC, stepB, stepA, stepD), numberOfElves = 3))
             .`as`("4 steps, 3 elves: A, B, C + D")
             .isEqualTo(5)
     }
@@ -180,14 +179,14 @@ class Day7 {
     @Disabled("in progress - does not pass atm")
     fun `should take into account step dependencies when calculating total time taken`() {
 
-        val stepA = Step(A, listOf(C), 5)
+        val stepA = Step(A, listOf(C), 15)
         val stepB = Step(B, emptyList(), 3)
         val stepC = Step(C, emptyList(), 1)
         val stepD = Step(D, emptyList(), 4)
 
-        assertThat(listOf(stepC, stepB, stepA, stepD).secondsToCompleteByNumberOfElves(numberOfElves = 3))
+        assertThat(findTimeWhenTasksRunInParallel(listOf(stepC, stepB, stepA, stepD), numberOfElves = 3))
             .`as`("4 steps, seconds to complete by 3 elves is the maximum of (step B) and (step C + step A) and (step D)")
-            .isEqualTo(6)
+            .isEqualTo(16)
     }
 
     private fun findStepOrderForInput(stepDependenciesFileName: String): String {
@@ -206,6 +205,44 @@ class Day7 {
         return Pair(StepId.valueOf(step), StepId.valueOf(dependency))
     }
 }
+
+private fun findTimeWhenTasksRunInParallel(steps: List<Step>, numberOfElves: Int): Int {
+
+    val elves = mutableMapOf<ElfId, SecondFreeToStartNextTask>()
+
+    (1..numberOfElves).forEach { elfId ->
+        elves[elfId] = 0
+    }
+
+    val remainingSteps = steps.toMutableList()
+
+    var currentSecond = 0
+    while (remainingSteps.isNotEmpty()) {
+        println("This is second $currentSecond")
+        elves.forEach {
+            println("    Elf ${it.key} will be free to start work on second ${it.value}")
+            if (it.value  <= currentSecond && remainingSteps.isNotEmpty()) {
+                val nextStep = remainingSteps.findNextStep()
+                remainingSteps.remove(nextStep)
+                remainingSteps.removeDependencyOn(nextStep)
+                println("    Elf ${it.key} is free, allocated next step ${nextStep.id}")
+                elves[it.key] = it.value + nextStep.secondsToComplete
+            }
+        }
+        println("Steps remaining: ${remainingSteps.listValuesNicely()}")
+        currentSecond++
+    }
+
+    return elves
+        .map { it.value }
+        .max()
+        ?: throw IllegalArgumentException("No tasks provided!")
+}
+
+typealias SecondFreeToStartNextTask = Int
+
+private fun List<Step>.listValuesNicely() = this.map { it.id }.joinToString(",")
+
 
 private fun List<Step>.secondsToCompleteByNumberOfElves(numberOfElves: Int): Int {
 
@@ -298,8 +335,140 @@ enum class StepId {
     A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
 }
 
-private data class Step(
+data class Step(
     val id: StepId,
     val dependsOn: List<StepId>,
     val secondsToComplete: Int = 0
 )
+
+
+// *** ATTEMPT 3
+//private fun findTimeWhenTasksRunInParallel(steps: List<Step>, numberOfElves: Int): Int {
+//
+//    val elves = mutableMapOf<ElfId, MutableList<Step>>()
+//
+//    (1..numberOfElves).forEach { elfId ->
+//        elves[elfId] = mutableListOf()
+//    }
+//
+//
+//    val remainingSteps = steps.toMutableList()
+//
+//    while (remainingSteps.isNotEmpty()) {
+//        elves.forEach {
+//            println("Elf ${it.key} has worked on steps [${it.value.listValuesNicely()}]  so far")
+//
+//            val nextStep = remainingSteps.findNextStep()
+//            remainingSteps.remove(nextStep)
+//            remainingSteps.removeDependencyOn(nextStep)
+//
+//            println("Elf ${it.key} allocated step ${nextStep.id}")
+//            it.value.add(nextStep)
+//        }
+//
+//
+//    }
+//
+//    return elves
+//        .mapValues { it.value.map { it.secondsToComplete }.sum() }
+//        .map { it.value }
+//        .max()
+//        ?: throw IllegalArgumentException("No tasks provided!")
+//}
+
+
+// **** ATTEMPT 2
+//private fun findTimeWhenTasksRunInParallel(steps: List<Step>, numberOfElves: Int): Int {
+//
+//    val timeSpentByEachElf = mutableMapOf<ElfId, SecondsSpentOnTasks>()
+//
+//    runBlocking {
+//
+//        val remainingSteps = Channel<List<Step>>()
+//
+//        repeat(numberOfElves) {
+//            workOnNextStep(it, remainingSteps, timeSpentByEachElf)
+//        }
+//
+//        remainingSteps.send(steps.toMutableList())
+//    }
+//
+//    return timeSpentByEachElf
+//        .map { (_, secondsTakenByThisElfToCompleteTasks) -> secondsTakenByThisElfToCompleteTasks }
+//        .max()
+//        ?: throw IllegalArgumentException("No tasks provided!")
+//}
+//
+//fun CoroutineScope.workOnNextStep(
+//    elfId: ElfId,
+//    stepPot: Channel<List<Step>>,
+//    timeSpentByEachElf: MutableMap<ElfId, SecondsSpentOnTasks>
+//) {
+//    launch {
+//        while (true) {
+//            val remainingSteps = stepPot.receive().toMutableList()
+//            val nextStep = remainingSteps.findNextStep()
+//            remainingSteps.remove(nextStep)
+//            remainingSteps.removeDependencyOn(nextStep)
+//
+//            println("Elf $elfId is allocated step ${nextStep.id}")
+//            val secondsThisElfHasSpentOnTasks = timeSpentByEachElf.getOrPut(elfId) { 0 }
+//            timeSpentByEachElf[elfId] = secondsThisElfHasSpentOnTasks + nextStep.secondsToComplete
+//
+//            if (remainingSteps.isEmpty()) {
+//                println("Elf $elfId has completed the last step - closing channel")
+//                stepPot.close()
+//            } else {
+//                println("Elf $elfId has completed step ${nextStep.id} and is sending remaining steps on")
+//                stepPot.send(remainingSteps.toList())
+//            }
+//        }
+//
+//    }
+//}
+
+// ***** ATTEMPT 1
+//private fun findTimeWhenTasksRunInParallel(steps: List<Step>, numberOfElves: Int): Int {
+//    val timeSpentByEachElf = mutableMapOf<ElfId, SecondsSpentOnTasks>()
+//
+//    runBlocking {
+//        val stepPot = handOutSteps(steps)
+//        repeat(numberOfElves) {
+//            workOnStep(it, stepPot, timeSpentByEachElf)
+//        }
+//    }
+//
+//    return timeSpentByEachElf
+//        .map { (_, secondsTakenByThisElfToCompleteTasks) -> secondsTakenByThisElfToCompleteTasks }
+//        .max()
+//        ?: throw IllegalArgumentException("No tasks provided!")
+//
+//}
+//
+//fun CoroutineScope.handOutSteps(allSteps: List<Step>) = produce {
+//
+//    val remainingSteps = allSteps.toMutableList()
+//
+//    while (remainingSteps.isNotEmpty()) {
+//        val nextStep = remainingSteps.findNextStep()
+//        remainingSteps.remove(nextStep)
+//        remainingSteps.removeDependencyOn(nextStep)
+//        send(nextStep)
+//    }
+//}
+//
+//
+//fun CoroutineScope.workOnStep(
+//    elfId: ElfId,
+//    stepPot: ReceiveChannel<Step>,
+//    timeSpentByEachElf: MutableMap<ElfId, SecondsSpentOnTasks>
+//) {
+//    launch {
+//        for (step in stepPot) {
+//            println("Elf $elfId is allocated step ${step.id}")
+//            val secondsThisElfHasSpentOnTasks = timeSpentByEachElf.getOrPut(elfId) { 0 }
+//            timeSpentByEachElf[elfId] = secondsThisElfHasSpentOnTasks + step.secondsToComplete
+//        }
+//    }
+//}
+// ***** END OF ATTEMPT 1

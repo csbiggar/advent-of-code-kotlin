@@ -176,8 +176,29 @@ class Day7 {
 
     @Test
     fun `should find time taken for example given in instructions`() {
-        val time = secondsToCompleteSteps(readSteps("sample.txt", baseTimeTaken = 0), numberOfElves = 2)
-        assertThat(time).`as`("Sample data - time take").isEqualTo(15)
+        val exampleSteps = readSteps("sample.txt", baseTimeTaken = 0)
+        assertThat(secondsToCompleteSteps(exampleSteps, numberOfElves = 2)).`as`("Sample data - time take")
+            .isEqualTo(15)
+    }
+
+    @Test
+    fun `should find the time for 1 elf to complete the real data`() {
+        val realSteps = readSteps("advent-of-code-input-day-7.txt")
+        assertThat(
+            secondsToCompleteSteps(
+                realSteps,
+                numberOfElves = 1
+            )
+        ).`as`("Time for 1 elves to complete the real steps").isEqualTo(1911)
+    }
+
+    @Test
+    fun `show me the answer to part 2 - time for 5 elves to complete real data`() {
+        val realSteps = readSteps("advent-of-code-input-day-7.txt")
+        val time = secondsToCompleteSteps(realSteps, numberOfElves = 5)
+        println("Time for 5 elves to complete the steps is $time seconds")
+
+        assertThat(time).`as`("This gives 847 which is incorrect!").isNotEqualTo(847)
     }
 
     private fun findStepOrderForInput(stepDependenciesFileName: String): String {
@@ -187,10 +208,20 @@ class Day7 {
     }
 
     private fun readSteps(stepDependenciesFileName: String, baseTimeTaken: Int = 60): List<Step> {
-        return File(javaClass.getResource(stepDependenciesFileName).toURI())
+        val steps = File(javaClass.getResource(stepDependenciesFileName).toURI())
             .readLines()
             .map { mapFileLineToStepDependencyPair(it) }
             .collateStepDependencies(baseTimeTaken)
+
+//        //List steps read
+//        steps
+//            .sortedBy { it.id }
+//            .forEach {
+//                println(it)
+//            }
+//        println("Number of steps: ${steps.size}")
+
+        return steps
     }
 
     private fun mapFileLineToStepDependencyPair(fileLine: String): Pair<StepId, Dependency> {

@@ -131,16 +131,16 @@ class Day7 {
         val stepB = Step(B, emptyList(), 3)
         val stepC = Step(C, emptyList(), 1)
 
-        assertThat(listOf(stepA, stepB).secondsToCompleteByNumberOfElves(numberOfElves = 1))
+        assertThat(secondsToCompleteSteps(list = listOf(stepA, stepB), numberOfElves = 1))
             .`as`("2 steps, seconds to complete by 1 elf is the sum of both").isEqualTo(8)
 
-        assertThat(listOf(stepA, stepB).secondsToCompleteByNumberOfElves(numberOfElves = 2))
+        assertThat(secondsToCompleteSteps(list = listOf(stepA, stepB), numberOfElves = 2))
             .`as`("2 steps, seconds to complete by 2 elves is the maximum of the two").isEqualTo(5)
 
-        assertThat(listOf(stepA, stepB, stepC).secondsToCompleteByNumberOfElves(numberOfElves = 2))
+        assertThat(secondsToCompleteSteps(list = listOf(stepA, stepB, stepC), numberOfElves = 2))
             .`as`("3 steps, seconds to complete by 2 elves is the maximum of (step A + step C) and step B").isEqualTo(6)
 
-        assertThat(listOf(stepC, stepA, stepB).secondsToCompleteByNumberOfElves(numberOfElves = 2))
+        assertThat(secondsToCompleteSteps(list = listOf(stepC, stepA, stepB), numberOfElves = 2))
             .`as`("3 steps the other way around, to check they are sorted alphabetically").isEqualTo(6)
     }
 
@@ -215,11 +215,11 @@ class Day7 {
 
 }
 
-private fun List<Step>.secondsToCompleteByNumberOfElves(numberOfElves: Int): Int {
+private fun secondsToCompleteSteps(list: List<Step>, numberOfElves: Int): Int {
 
     val timeSpentByEachElf = mutableMapOf<ElfId, SecondsSpentOnTasks>()
 
-    this.sortedBy { it.id }
+    list.sortedBy { it.id }
         .map { it.secondsToComplete }
         .forEachIndexed { index, secondsToCompleteCurrentTask ->
             val allocatedToElfId: Int = (index + numberOfElves + 1) % numberOfElves

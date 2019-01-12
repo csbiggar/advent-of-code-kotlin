@@ -2,7 +2,7 @@ package day7
 
 import day7.StepId.*
 import day7.WorkStatus.COMPLETE
-import day7.WorkStatus.NOT_STARTED
+import day7.WorkStatus.TO_DO
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Disabled
@@ -207,12 +207,12 @@ class Day7 {
         val step = letters[2]
         return Pair(StepId.valueOf(step), StepId.valueOf(dependency))
     }
-}
 
+    //Temporarily unimplemented because first version was no good!
+    private fun findTimeWhenTasksRunInParallel(listOf: List<Step>, numberOfElves: Int): Int {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
-//Temporarily unimplemented because first version was no good!
-private fun findTimeWhenTasksRunInParallel(listOf: List<Step>, numberOfElves: Int): Int {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 }
 
 private fun List<Step>.secondsToCompleteByNumberOfElves(numberOfElves: Int): Int {
@@ -269,7 +269,7 @@ private fun List<Step>.putStepIdsInOrder(): List<StepId> {
     return doneSteps
 }
 
-private fun MutableList<Step>.moreToDo(): Boolean = any { it.status == NOT_STARTED }
+private fun MutableList<Step>.moreToDo(): Boolean = any { it.status == TO_DO }
 
 private fun List<Step>.putStepsInOrder() = putStepIdsInOrder().map { stepId -> this.getById(stepId) }
 
@@ -283,26 +283,18 @@ private fun doNextStep(
 
     doneSteps.add(nextStep.id)
     remainingSteps.markAsComplete(nextStep)
-    remainingSteps.removeDependencyOn(nextStep)
 }
 
 private fun List<Step>.findNextStep(): Step {
-    return filter { it.status == NOT_STARTED }
+    return filter { it.status == TO_DO }
         .sortedBy { it.id }
-        .first { it.dependsOn.isEmpty() }
+        .first { step -> this.dependenciesCompleteFor(step) }
 }
 
-private fun MutableList<Step>.removeDependencyOn(
-    doneStep: Step
-) {
-    this.replaceAll { step ->
-        step.copy(
-            dependsOn = step.dependsOn
-                .filter { it != doneStep.id }
-        )
-    }
-
-    this.removeIf { it == doneStep }
+private fun List<Step>.dependenciesCompleteFor(step: Step): Boolean {
+    return step.dependsOn
+        .map { dependentStepId -> this.getById(dependentStepId) }
+        .none { dependentStep -> dependentStep.status != COMPLETE }
 }
 
 private fun MutableList<Step>.markAsComplete(step: Step) {
@@ -317,21 +309,13 @@ enum class StepId {
 }
 
 enum class WorkStatus {
-    NOT_STARTED, COMPLETE
-    //IN_PROGRESS, //coming soon
+    TO_DO, IN_PROGRESS, COMPLETE
 }
 
 data class Step(
     val id: StepId,
     val dependsOn: List<StepId>,
     val secondsToComplete: Int = 0,
-    val status: WorkStatus = NOT_STARTED
+    val status: WorkStatus = TO_DO
 )
-
-// repeat for each second
-//      repeat for each elf
-//          has elf finished? m
-//              mark step as COMPLETE,
-//              give elf new step,
-//              mark step as STARTED
 

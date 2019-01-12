@@ -1,11 +1,9 @@
 package day7
 
 import day7.StepId.*
-import day7.WorkStatus.COMPLETE
-import day7.WorkStatus.TO_DO
+import day7.WorkStatus.*
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -126,22 +124,22 @@ class Day7 {
     //-----------
 
     @Test
-    fun `should start steps with no dependencies in alphabetical order, finding the total time taken for x elves`() {
+    fun `should start steps with no dependencies in alphabetical order, taking into account time taken for each step, and find the total time taken for x elves`() {
         val stepA = Step(A, emptyList(), 5)
         val stepB = Step(B, emptyList(), 3)
         val stepC = Step(C, emptyList(), 1)
 
-        assertThat(secondsToCompleteSteps(list = listOf(stepA, stepB), numberOfElves = 1))
+        assertThat(secondsToCompleteSteps(steps = listOf(stepA, stepB), numberOfElves = 1))
             .`as`("2 steps, seconds to complete by 1 elf is the sum of both").isEqualTo(8)
 
-        assertThat(secondsToCompleteSteps(list = listOf(stepA, stepB), numberOfElves = 2))
+        assertThat(secondsToCompleteSteps(steps = listOf(stepA, stepB), numberOfElves = 2))
             .`as`("2 steps, seconds to complete by 2 elves is the maximum of the two").isEqualTo(5)
 
-        assertThat(secondsToCompleteSteps(list = listOf(stepA, stepB, stepC), numberOfElves = 2))
-            .`as`("3 steps, seconds to complete by 2 elves is the maximum of (step A + step C) and step B").isEqualTo(6)
+        assertThat(secondsToCompleteSteps(steps = listOf(stepA, stepB, stepC), numberOfElves = 2))
+            .`as`("3 steps, seconds to complete by 2 elves is the maximum of step A and (step B + C)").isEqualTo(5)
 
-        assertThat(secondsToCompleteSteps(list = listOf(stepC, stepA, stepB), numberOfElves = 2))
-            .`as`("3 steps the other way around, to check they are sorted alphabetically").isEqualTo(6)
+        assertThat(secondsToCompleteSteps(steps = listOf(stepC, stepA, stepB), numberOfElves = 2))
+            .`as`("3 steps the other way around, to check they are sorted alphabetically").isEqualTo(5)
     }
 
     @Test
@@ -162,24 +160,22 @@ class Day7 {
     }
 
     @Test
-    @Disabled("in progress for part 2")
     fun `should allocate new tasks to waiting elves`() {
         val stepA = Step(A, emptyList(), 5)
         val stepB = Step(B, emptyList(), 3)
         val stepC = Step(C, emptyList(), 1)
         val stepD = Step(D, emptyList(), 4)
 
-        assertThat(findTimeWhenTasksRunInParallel(listOf(stepC, stepB, stepA, stepD), numberOfElves = 2))
+        assertThat(secondsToCompleteSteps(listOf(stepC, stepB, stepA, stepD), numberOfElves = 2))
             .`as`("4 steps, 2 elves: Next task should be allocated to the elf finished first: A,  B + C + D")
             .isEqualTo(8)
 
-        assertThat(findTimeWhenTasksRunInParallel(listOf(stepC, stepB, stepA, stepD), numberOfElves = 3))
+        assertThat(secondsToCompleteSteps(listOf(stepC, stepB, stepA, stepD), numberOfElves = 3))
             .`as`("4 steps, 3 elves: A, B, C + D")
             .isEqualTo(5)
     }
 
     @Test
-    @Disabled("in progress for part 2")
     fun `should take into account step dependencies when calculating total time taken`() {
 
         val stepA = Step(A, listOf(C), 15)
@@ -187,7 +183,7 @@ class Day7 {
         val stepC = Step(C, emptyList(), 1)
         val stepD = Step(D, emptyList(), 4)
 
-        assertThat(findTimeWhenTasksRunInParallel(listOf(stepC, stepB, stepA, stepD), numberOfElves = 3))
+        assertThat(secondsToCompleteSteps(listOf(stepC, stepB, stepA, stepD), numberOfElves = 3))
             .`as`("4 steps, seconds to complete by 3 elves is the maximum of (step B) and (step C + step A) and (step D)")
             .isEqualTo(16)
     }
@@ -208,31 +204,101 @@ class Day7 {
         return Pair(StepId.valueOf(step), StepId.valueOf(dependency))
     }
 
-    //Temporarily unimplemented because first version was no good!
-    private fun findTimeWhenTasksRunInParallel(listOf: List<Step>, numberOfElves: Int): Int {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
 }
 
-private fun secondsToCompleteSteps(list: List<Step>, numberOfElves: Int): Int {
+private fun secondsToCompleteSteps(steps: List<Step>, numberOfElves: Int): Int {
 
-    val timeSpentByEachElf = mutableMapOf<ElfId, SecondsSpentOnTasks>()
+    println("------------------")
+    println("     NEW TEST")
+    println("------------------")
 
-    list.sortedBy { it.id }
-        .map { it.secondsToComplete }
-        .forEachIndexed { index, secondsToCompleteCurrentTask ->
-            val allocatedToElfId: Int = (index + numberOfElves + 1) % numberOfElves
-            val secondsThisElfHasSpentOnTasks = timeSpentByEachElf.getOrPut(allocatedToElfId) { 0 }
-            timeSpentByEachElf[allocatedToElfId] = secondsThisElfHasSpentOnTasks + secondsToCompleteCurrentTask
+
+    //for each second
+    // for each elf
+    //      if elf is free && more to do
+    //          complete step elf is currently working
+    //          allocate next step to elf
+    //          mark next step as in progress
+    //  end-each-elf
+    //end each second
+
+    val elvesWorklists = mutableMapOf<ElfId, MutableList<Step>>()
+
+
+    val elves = (1..numberOfElves)
+
+    val toDoList = steps.toMutableList()
+
+    var currentSecond = 0
+    while (toDoList.moreToDo()) {
+        println("** Second $currentSecond, remaining steps: ")
+        toDoList.forEach {
+            println("  $it")
         }
 
-    return timeSpentByEachElf
-        .map { (_, secondsTakenByThisElfToCompleteTasks) -> secondsTakenByThisElfToCompleteTasks }
+        for (elfId in elves) {
+            println("    ELF $elfId")
+
+            val thisElfsWorklist = elvesWorklists.getOrPut(elfId) { mutableListOf() }
+
+            println("        -  has worklist ${thisElfsWorklist.map { it.id }}")
+
+            val secondElfIsNextFree = thisElfsWorklist.map { it.secondsToComplete }.sum()
+
+            println("        -  is next free at second $secondElfIsNextFree")
+
+            if (currentSecond >= secondElfIsNextFree && toDoList.moreToDo()) {
+                //Mark step as complete
+                thisElfsWorklist
+                    .firstOrNull { it.status != COMPLETE }
+                    ?.let {
+                        println("        -  marking step ${it.id} as COMPLETE")
+                        toDoList.markAsComplete(it.id)
+                    }
+
+                //Allocate next step (if there is one available) & mark as in progress
+                val nextStep = toDoList
+                    .findNextStep()
+                    ?.let { nextStep ->
+                        println("        -  allocating next step $nextStep")
+                        thisElfsWorklist.add(nextStep)
+                        toDoList.markAsInProgress(nextStep.id)
+                    }
+                    ?: println("        -  WARNING! no steps ready to pick up")
+
+                println("        -  new worklist ${elvesWorklists.get(elfId)?.map { it.id }}")
+
+            }
+
+        }
+
+        currentSecond++
+
+    }
+
+    return elvesWorklists
+        .map { (_, worklist) -> worklist.map { it.secondsToComplete }.sum() }
         .max()
         ?: throw IllegalArgumentException("No tasks provided!")
-
 }
+
+//
+//    val timeSpentByEachElf = mutableMapOf<ElfId, SecondsSpentOnTasks>()
+//
+//    list.sortedBy { it.id }
+//        .map { it.secondsToComplete }
+//        .forEachIndexed { index, secondsToCompleteCurrentTask ->
+//            val allocatedToElfId: Int = (index + numberOfElves + 1) % numberOfElves
+//            val secondsThisElfHasSpentOnTasks = timeSpentByEachElf.getOrPut(allocatedToElfId) { 0 }
+//            timeSpentByEachElf[allocatedToElfId] = secondsThisElfHasSpentOnTasks + secondsToCompleteCurrentTask
+//        }
+//
+//    return timeSpentByEachElf
+//        .map { (_, secondsTakenByThisElfToCompleteTasks) -> secondsTakenByThisElfToCompleteTasks }
+//        .max()
+//        ?: throw IllegalArgumentException("No tasks provided!")
+
+//}
 
 private fun List<Pair<StepId, Dependency>>.collateStepDependencies(): List<Step> {
     val result = mutableMapOf<StepId, MutableList<StepId>>()
@@ -279,16 +345,18 @@ private fun doNextStep(
     remainingSteps: MutableList<Step>,
     doneSteps: MutableList<StepId>
 ) {
-    val nextStep = remainingSteps.findNextStep()
-
-    doneSteps.add(nextStep.id)
-    remainingSteps.markAsComplete(nextStep)
+    remainingSteps
+        .findNextStep()
+        ?.let { nextStep ->
+            doneSteps.add(nextStep.id)
+            remainingSteps.markAsComplete(nextStep.id)
+        }
 }
 
-private fun List<Step>.findNextStep(): Step {
+private fun List<Step>.findNextStep(): Step? {
     return filter { it.status == TO_DO }
         .sortedBy { it.id }
-        .first { step -> this.dependenciesCompleteFor(step) }
+        .firstOrNull { step -> this.dependenciesCompleteFor(step) }
 }
 
 private fun List<Step>.dependenciesCompleteFor(step: Step): Boolean {
@@ -297,11 +365,13 @@ private fun List<Step>.dependenciesCompleteFor(step: Step): Boolean {
         .none { dependentStep -> dependentStep.status != COMPLETE }
 }
 
-private fun MutableList<Step>.markAsComplete(step: Step) {
-    val stepNowMarkedAsComplete = step.copy(status = COMPLETE)
-    remove(step)
-    add(stepNowMarkedAsComplete)
+private fun MutableList<Step>.markAsInProgress(stepId: StepId) = markAs(stepId, IN_PROGRESS)
+private fun MutableList<Step>.markAsComplete(stepId: StepId) = markAs(stepId, COMPLETE)
 
+private fun MutableList<Step>.markAs(stepId: StepId, newStatus: WorkStatus) {
+    val stepNowMarkedAsComplete = this.getById(stepId).copy(status = newStatus)
+    this.removeIf { it.id == stepId }
+    add(stepNowMarkedAsComplete)
 }
 
 enum class StepId {
